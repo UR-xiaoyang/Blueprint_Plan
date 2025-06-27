@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 10px 0; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #output { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 4px; max-height: 400px; overflow-y: auto; }
+        .test-section { margin: 20px 0; border: 1px solid #ddd; padding: 15px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>蓝图计划 API 测试</h1>
+    
+    <div class="test-section">
+        <h3>测试1: 创建计划</h3>
+        <button onclick="testCreatePlan()">创建测试计划</button>
+        <div id="create-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>测试2: 获取所有计划</h3>
+        <button onclick="testGetPlans()">获取计划列表</button>
+        <div id="get-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>测试3: 检查数据文件</h3>
+        <button onclick="checkDataFile()">检查数据文件</button>
+        <div id="file-output"></div>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            const time = new Date().toLocaleTimeString();
+            output.innerHTML += `<div>[${time}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function testCreatePlan() {
+            try {
+                log('开始创建测试计划...');
+                
+                // 检查是否在Tauri环境中
+                if (typeof window.__TAURI__ === 'undefined') {
+                    log('❌ 不在Tauri环境中，无法测试API');
+                    return;
+                }
+
+                const { invoke } = window.__TAURI__.core;
+                
+                const testPlan = {
+                    title: '测试计划 ' + Date.now(),
+                    description: '这是一个API测试创建的计划',
+                    status: 'planning',
+                    startDate: '2024-01-01',
+                    endDate: '2024-12-31'
+                };
+
+                log('调用 create_plan API...');
+                const result = await invoke('create_plan', { plan: testPlan });
+                
+                log('✅ 计划创建成功!');
+                log('计划ID: ' + result.id);
+                log('计划标题: ' + result.title);
+                
+                document.getElementById('create-output').innerHTML = 
+                    `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+                    
+            } catch (error) {
+                log('❌ 创建计划失败: ' + error);
+                document.getElementById('create-output').innerHTML = 
+                    `<div style="color: red;">错误: ${error}</div>`;
+            }
+        }
+
+        async function testGetPlans() {
+            try {
+                log('开始获取计划列表...');
+                
+                if (typeof window.__TAURI__ === 'undefined') {
+                    log('❌ 不在Tauri环境中，无法测试API');
+                    return;
+                }
+
+                const { invoke } = window.__TAURI__.core;
+                
+                log('调用 get_all_plans API...');
+                const plans = await invoke('get_all_plans');
+                
+                log('✅ 获取计划成功!');
+                log('计划数量: ' + plans.length);
+                
+                document.getElementById('get-output').innerHTML = 
+                    `<pre>${JSON.stringify(plans, null, 2)}</pre>`;
+                    
+            } catch (error) {
+                log('❌ 获取计划失败: ' + error);
+                document.getElementById('get-output').innerHTML = 
+                    `<div style="color: red;">错误: ${error}</div>`;
+            }
+        }
+
+        async function checkDataFile() {
+            try {
+                log('检查数据文件状态...');
+                
+                if (typeof window.__TAURI__ === 'undefined') {
+                    log('❌ 不在Tauri环境中，无法测试API');
+                    return;
+                }
+
+                const { invoke } = window.__TAURI__.core;
+                
+                // 尝试导出数据来检查文件内容
+                log('调用 export_data API...');
+                const data = await invoke('export_data');
+                
+                log('✅ 数据文件存在且可读!');
+                const parsed = JSON.parse(data);
+                log('计划数量: ' + (parsed.plans ? parsed.plans.length : 0));
+                
+                document.getElementById('file-output').innerHTML = 
+                    `<pre>${data}</pre>`;
+                    
+            } catch (error) {
+                log('❌ 检查数据文件失败: ' + error);
+                document.getElementById('file-output').innerHTML = 
+                    `<div style="color: red;">错误: ${error}</div>`;
+            }
+        }
+
+        // 页面加载时的初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.__TAURI__ === 'undefined') {
+                log('⚠️  当前不在Tauri环境中，API测试功能不可用');
+                log('请在Tauri应用中打开此页面进行测试');
+            } else {
+                log('✅ Tauri环境检测成功，可以进行API测试');
+            }
+        });
+    </script>
+</body>
+</html> 
