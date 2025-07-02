@@ -52,7 +52,7 @@ start_web() {
 # 函数：启动 Electron 开发模式
 start_electron() {
     echo "🖥️  正在以开发模式启动 Electron 应用..."
-    npm run electron:dev
+    npm run electron-dev
 }
 
 # 函数：打开 Android Studio (带错误处理)
