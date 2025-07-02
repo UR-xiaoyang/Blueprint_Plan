@@ -906,6 +906,8 @@ body {
 @media (max-width: 768px) {
   .app-content {
     flex-direction: column;
+    height: auto;
+    min-height: 100vh;
   }
   
   .sidebar {
@@ -913,18 +915,61 @@ body {
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sidebar-nav li {
+    margin: 0;
+    padding: 0;
+  }
+
+  .sidebar-nav button {
+    padding: 0.75rem;
+    min-height: 50px;
+    min-width: 50px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sidebar-nav button .icon {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .sidebar-nav button .text {
+    display: none;
+  }
+
+  .sidebar-stats {
+    display: none;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+  
+  .main-content {
+    padding: 0.75rem;
+    height: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
   }
   
   .grid-2,
   .grid-3 {
-    grid-template-columns: 1fr;
-  }
-  
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .form-row {
     grid-template-columns: 1fr;
   }
   
@@ -936,7 +981,8 @@ body {
   .plan-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.75rem;
+    padding: 1rem;
   }
   
   .plan-progress {
@@ -946,6 +992,91 @@ body {
   
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* 增大触摸区域 */
+  .btn, 
+  button,
+  .sidebar-nav button,
+  .task-card-actions button,
+  .plan-card-actions button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem;
+  }
+
+  /* 表单元素优化 */
+  input, 
+  select, 
+  textarea {
+    font-size: 16px; /* 防止iOS自动缩放 */
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  /* 卡片样式优化 */
+  .card,
+  .plan-card,
+  .task-card,
+  .stat-card,
+  .chart-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+  }
+
+  /* 改善滚动体验 */
+  .main-content,
+  .sidebar,
+  .task-list-container,
+  .plan-list-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* 安卓端特定优化 */
+@supports (-webkit-touch-callout: none) {
+  /* 修复安卓端触摸反馈 */
+  button:active,
+  .btn:active,
+  .card:active,
+  .plan-card:active,
+  .task-card:active {
+    opacity: 0.7;
+    transition: opacity 0.1s;
+  }
+
+  /* 安卓端底部导航安全区域 */
+  .app {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar-nav {
+    flex-wrap: wrap;
+  }
+  
+  .main-content {
+    max-height: calc(100vh - 70px);
+  }
+}
+
+/* 更大屏幕的安卓平板适配 */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .sidebar-nav button .text {
+    display: block;
+    font-size: 0.8rem;
+  }
+
+  .sidebar-nav {
+    justify-content: space-between;
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -1796,4 +1927,65 @@ body {
 .sidebar-stats {
   border-top: 1px solid var(--border-color);
   padding-top: 1rem;
+}
+
+/* 移动端特定样式 */
+.app.mobile .app-content {
+  flex-direction: column;
+  height: auto;
+  min-height: 100vh;
+}
+
+.app.mobile .sidebar {
+  width: 100%;
+  height: auto;
+  border-right: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app.mobile .main-content {
+  padding: 0.75rem;
+  height: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app.mobile .card,
+.app.mobile .plan-card,
+.app.mobile .task-card,
+.app.mobile .stat-card,
+.app.mobile .chart-card {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+}
+
+.app.mobile .btn, 
+.app.mobile button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.75rem;
+}
+
+.app.mobile input, 
+.app.mobile select, 
+.app.mobile textarea {
+  font-size: 16px; /* 防止iOS自动缩放 */
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* 确保移动端上的触摸反馈 */
+.app.mobile button:active,
+.app.mobile .btn:active,
+.app.mobile .card:active {
+  opacity: 0.7;
+  transition: opacity 0.1s;
+}
+
+/* 安全区域 */
+.app.mobile {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }

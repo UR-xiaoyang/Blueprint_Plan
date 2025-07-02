@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">blueprint-plan</string>
+    <string name="title_activity_main">blueprint-plan</string>
+    <string name="package_name">com.yourcompany.blueprintplan</string>
+    <string name="custom_url_scheme">com.yourcompany.blueprintplan</string>
+</resources>

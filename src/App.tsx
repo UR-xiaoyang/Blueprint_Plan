@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, memo } from 'react';
+import { useState, useCallback, useMemo, memo, useEffect } from 'react';
 import "./App.css";
 import Dashboard from "./components/Dashboard";
 import PlanManager from "./components/PlanManager";
@@ -43,6 +43,7 @@ const App: React.FC = memo(() => {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   // 通知系统
   const { notifications, removeNotification } = useNotifications();
@@ -62,6 +63,30 @@ const App: React.FC = memo(() => {
     refreshData
   } = usePlanManager();
 
+  // 检测移动设备
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const isMobileView = window.innerWidth <= 768;
+      setIsMobile(isMobileView);
+      
+      // 在移动设备上自动折叠侧边栏
+      if (isMobileView && !isSidebarCollapsed) {
+        setSidebarCollapsed(true);
+      }
+    };
+    
+    // 初始检查
+    checkIfMobile();
+    
+    // 监听窗口大小变化
+    window.addEventListener('resize', checkIfMobile);
+    
+    // 清理监听器
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, [isSidebarCollapsed]);
+
   const selectedPlan = useMemo(
     () => plans.find(plan => plan.id === selectedPlanId) ?? null,
     [plans, selectedPlanId]
@@ -69,7 +94,11 @@ const App: React.FC = memo(() => {
 
   const handleViewChange = useCallback((view: ViewType) => {
     setCurrentView(view);
-  }, []);
+    // 在移动设备上，切换视图后自动折叠侧边栏
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  }, [isMobile]);
 
   const handlePlanSelect = useCallback((plan: Plan) => {
     setSelectedPlanId(plan.id);
@@ -159,7 +188,7 @@ const App: React.FC = memo(() => {
   }, [currentView, plans, selectedPlan, loading, error, handlePlanSelect, createPlan, updatePlan, deletePlan, createTask, updateTask, deleteTask, refreshData]);
 
   return (
-    <div className={`app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobile ? 'mobile' : ''}`}>
       <div className="app-content">
         <Sidebar 
           currentView={currentView}
