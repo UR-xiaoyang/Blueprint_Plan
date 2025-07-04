@@ -83,6 +83,13 @@ const api = {
     return data.plans;
   },
 
+  saveAllPlans: (plans) => {
+    const data = loadData();
+    data.plans = plans;
+    saveData(data);
+    return true;
+  },
+
   createPlan: (plan) => {
     const data = loadData();
     plan.id = Date.now().toString();

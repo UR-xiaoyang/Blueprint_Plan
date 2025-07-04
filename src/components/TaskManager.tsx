@@ -447,6 +447,7 @@ const TaskCard = memo(({
 
   return (
     <div className={`task-card ${getStatusClass(task.status)}`}>
+      <div className={`task-status-bar ${getStatusClass(task.status)}`}></div>
       <div className="task-card-main">
         <div className="task-card-header">
           <span className={`priority-badge ${getPriorityColor(task.priority)}`}>

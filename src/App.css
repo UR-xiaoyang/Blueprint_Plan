@@ -35,6 +35,15 @@
   --sidebar-width: 280px;
 }
 
+@keyframes animated-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
 :root.dark-mode {
   --primary-color: #3b82f6;
   --primary-dark: #2563eb;
@@ -497,15 +506,9 @@ body {
   text-transform: capitalize;
 }
 
-@keyframes animated-gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+@keyframes barber-pole {
+  to {
+    background-position: 40px 0;
   }
 }
 
@@ -520,7 +523,7 @@ body {
 }
 
 .status-completed {
-  background-color: #a7f3d0;
+  background-color: #d1fae5;
   color: #047857;
 }
 
@@ -530,21 +533,24 @@ body {
 }
 
 .priority-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 500;
-  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .priority-high {
-  background-color: #fee2e2;
-  color: #dc2626;
+  background: linear-gradient(-45deg, #f97316, #f59e0b, #facc15, #fbbf24);
+  background-size: 400% 400%;
+  animation: animated-gradient 10s ease infinite;
+  color: white;
 }
 
 .priority-medium {
-  background-color: #fef3c7;
-  color: #d97706;
+  background-color: #e0e7ff;
+  color: #3730a3;
 }
 
 .priority-low {
@@ -774,11 +780,23 @@ body {
   transform: translateZ(0);
 }
 
+.task-card {
+  /* display: flex and other properties are defined below */
+}
+
+/* The border-left color logic is now handled by a dedicated element */
+
 .plan-card:hover,
 .task-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: var(--primary-color);
   transform: translateY(-2px);
+}
+
+.task-card.status-completed .task-card-title,
+.task-card.status-completed .task-card-description {
+  text-decoration: line-through;
+  color: var(--text-secondary);
 }
 
 .plan-card-header,
@@ -1229,15 +1247,25 @@ body {
 
 .plan-item.status-in-progress,
 .task-item.status-in-progress {
-  background: linear-gradient(-45deg, #f97316, #f59e0b, #facc15, #fbbf24);
-  background-size: 400% 400%;
-  animation: animated-gradient 10s ease infinite;
-  color: white;
+  background-color: #eef6ff;
+  color: var(--text-primary);
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.7) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.7) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 40px 40px;
+  animation: barber-pole 1.5s linear infinite;
 }
 
 .task-item.status-in-progress .task-title,
 .task-item.status-in-progress .task-status {
-  color: white;
+  color: inherit;
 }
 
 .today-tasks {
@@ -1747,21 +1775,9 @@ body {
   gap: 1rem; /* Adjust gap for a tighter list */
 }
 
-.task-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--surface-color);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  width: 100%; /* Make card take full width of its container */
-}
-
 .task-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .task-card-main {
@@ -1806,14 +1822,25 @@ body {
 }
 
 .task-card.status-in-progress {
-  background-color: #f0f9ff; /* A light blue for in-progress items */
-  border-left: 5px solid var(--primary-color);
+  background-color: #eef6ff;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.7) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.7) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 40px 40px;
+  animation: barber-pole 1.5s linear infinite;
 }
 
 .task-card.status-completed {
-  background-color: #f0fdf4; /* A light green for completed items */
-  border-left: 5px solid var(--success-color);
-  opacity: 0.8;
+  opacity: 0.7;
+  text-decoration: line-through;
+  background-color: #f9f9f9;
 }
 
 .task-card.status-completed .task-card-title,
@@ -1988,4 +2015,186 @@ body {
 /* 安全区域 */
 .app.mobile {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Task Manager */
+.task-manager {
+  padding: var(--spacing);
+}
+
+.task-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.task-card {
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  gap: 1rem;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.task-card.status-completed {
+  opacity: 0.7;
+  text-decoration: line-through;
+  background-color: #f9f9f9;
+}
+
+.task-status-bar {
+  width: 5px;
+  align-self: stretch;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.task-status-bar.status-in-progress {
+  background-color: var(--primary-color);
+}
+.task-status-bar.status-todo {
+  background-color: var(--warning-color);
+}
+.task-status-bar.status-completed {
+  background-color: var(--success-color);
+}
+
+.dark-mode .task-card {
+  background-color: #2c2c3e; /* A dark background for the card */
+  color: #e0e0e0; /* Lighter text color */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border-color: transparent;
+}
+
+.dark-mode .task-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .task-card.status-completed {
+  background-color: #252535;
+  opacity: 0.6;
+}
+
+.dark-mode .task-card.status-in-progress {
+  background-color: #2a3a4e;
+  background-image: linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 40px 40px;
+  animation: barber-pole 1.5s linear infinite;
+}
+
+.dark-mode .task-card .task-card-title {
+  color: #ffffff;
+}
+
+.dark-mode .task-card .task-card-description {
+  color: #b0b0b0;
+}
+
+/* Dark mode status colors are handled by the same classes */
+
+.task-card-main {
+  flex-grow: 1;
+  /* Add this to prevent text from touching the edge if content is too wide */
+  overflow: hidden; 
+}
+
+.task-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.dark-mode .plan-item.status-in-progress,
+.dark-mode .task-item.status-in-progress {
+  background-color: #2a3a4e;
+  color: var(--text-primary);
+  background-image: linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 40px 40px;
+  animation: barber-pole 1.5s linear infinite;
+}
+
+/* 头部区域 */
+.dashboard-header {
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-info {
+  flex: 1;
+}
+
+.dashboard-title {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-subtitle {
+  font-size: 1.2rem;
+  color: #94a3b8;
+  margin: 0.5rem 0 0 0;
+  font-weight: 400;
+}
+
+.header-time {
+  text-align: right;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.current-time {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #06b6d4;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.current-date {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-top: 0.5rem;
 }

@@ -62,34 +62,37 @@ app.whenReady().then(() => {
   });
 
   // Set up IPC handlers
-  ipcMain.handle('get_all_plans', async () => {
+  ipcMain.handle('getAllPlans', async () => {
     return api.getAllPlans();
   });
-  ipcMain.handle('create_plan', async (event, plan) => {
+  ipcMain.handle('saveAllPlans', async (event, plans) => {
+    return api.saveAllPlans(plans);
+  });
+  ipcMain.handle('createPlan', async (event, plan) => {
     return api.createPlan(plan);
   });
-  ipcMain.handle('update_plan', async (event, plan) => {
+  ipcMain.handle('updatePlan', async (event, plan) => {
     return api.updatePlan(plan);
   });
-  ipcMain.handle('delete_plan', async (event, planId) => {
+  ipcMain.handle('deletePlan', async (event, planId) => {
     return api.deletePlan(planId);
   });
-  ipcMain.handle('create_task', async (event, planId, task) => {
+  ipcMain.handle('createTask', async (event, planId, task) => {
     return api.createTask(planId, task);
   });
-  ipcMain.handle('update_task', async (event, task) => {
+  ipcMain.handle('updateTask', async (event, task) => {
     return api.updateTask(task);
   });
-  ipcMain.handle('delete_task', async (event, planId, taskId) => {
+  ipcMain.handle('deleteTask', async (event, planId, taskId) => {
     return api.deleteTask(planId, taskId);
   });
-  ipcMain.handle('get_statistics', async () => {
+  ipcMain.handle('getStatistics', async () => {
     return api.getStatistics();
   });
-  ipcMain.handle('export_data', async () => {
+  ipcMain.handle('exportData', async () => {
     return api.exportData();
   });
-  ipcMain.handle('import_data', async (event, jsonData) => {
+  ipcMain.handle('importData', async (event, jsonData) => {
     return api.importData(jsonData);
   });
   ipcMain.handle('greet', async (event, name) => {

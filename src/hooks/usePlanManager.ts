@@ -3,6 +3,15 @@ import * as Y from 'yjs';
 import { Plan, Task } from '../App';
 import { useYjs } from './useYjs';
 
+// 为 window.ipcRenderer 添加类型定义
+declare global {
+  interface Window {
+    ipcRenderer: {
+      invoke: (channel: string, ...args: any[]) => Promise<any>;
+    };
+  }
+}
+
 export interface PlanStats {
   totalPlans: number;
   activePlans: number;
@@ -48,47 +57,157 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Set up an observer on the Y.js plans array
+  // Utility to convert Y.Map to plain JS object
+  const ymapToJs = (ymap: Y.Map<any>): any => {
+    return ymap.toJSON();
+  };
+
+  // Debounce function
+  const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<F>): Promise<ReturnType<F>> =>
+      new Promise(resolve => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => resolve(func(...args)), waitFor);
+      });
+  };
+
+  // Debounced save function
+  const debouncedSave = useCallback(
+    debounce((plansToSave: Plan[]) => {
+      if (window.ipcRenderer) {
+        window.ipcRenderer.invoke('saveAllPlans', plansToSave);
+      }
+    }, 1000),
+    []
+  );
+
   useEffect(() => {
-    const observer = () => {
-      const plansArray = yPlans.toArray().map(yMap => yMap.toJSON() as Plan);
-      setManagedPlans(plansArray);
+    const syncPlans = () => {
+      const plans = yPlans.toArray().map(p => ymapToJs(p) as Plan);
+      setManagedPlans(plans);
+      debouncedSave(plans);
+    };
+
+    yPlans.observeDeep(syncPlans);
+
+    // Initial sync in case there's data from another source already in ydoc
+    syncPlans();
+
+    return () => {
+      yPlans.unobserveDeep(syncPlans);
+    };
+  }, [yPlans, debouncedSave]);
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setLoading(true);
+      if (window.ipcRenderer) {
+        try {
+          const storedPlans = await window.ipcRenderer.invoke('getAllPlans');
+          if (storedPlans && storedPlans.length > 0) {
+            ydoc.transact(() => {
+              const yPlansArray = storedPlans.map((plan: Plan) => {
+                const planMap = new Y.Map();
+                for (const key in plan) {
+                  if (key === 'tasks') {
+                    const yTasks = new Y.Array();
+                    plan.tasks.forEach(task => {
+                      const taskMap = new Y.Map();
+                      for (const taskKey in task) {
+                        taskMap.set(taskKey, task[taskKey as keyof Task]);
+                      }
+                      yTasks.push([taskMap]);
+                    });
+                    planMap.set(key, yTasks);
+                  } else {
+                    planMap.set(key, plan[key as keyof Plan]);
+                  }
+                }
+                return planMap;
+              });
+              // Clear existing and push new ones
+              yPlans.delete(0, yPlans.length);
+              yPlans.push(yPlansArray);
+            });
+          }
+        } catch (e) {
+          setError('Failed to load data');
+          console.error(e);
+        }
+      }
       setLoading(false);
     };
 
-    yPlans.observe(observer);
+    loadInitialData();
+  }, [ydoc, yPlans]);
 
-    // Initial load
-    observer();
+  const yjsToPlan = (planMap: Y.Map<any>): Plan => {
+    const plan: any = {};
+    planMap.forEach((value, key) => {
+      if (key === 'tasks') {
+        plan[key] = (value as Y.Array<Y.Map<any>>).toArray().map(ymapToJs);
+      } else {
+        plan[key] = value;
+      }
+    });
+    return plan as Plan;
+  };
 
-    return () => {
-      yPlans.unobserve(observer);
-    };
-  }, [yPlans]);
-
-  // stats calculation remains largely the same, but uses managedPlans
-  const stats = useMemo((): PlanStats => {
-    const activePlans = managedPlans.filter(plan => plan.status === 'in-progress');
-    const completedPlans = managedPlans.filter(plan => plan.status === 'completed');
+  const stats: PlanStats = useMemo(() => {
     const totalTasks = managedPlans.reduce((sum, plan) => sum + plan.tasks.length, 0);
-    const completedTasks = managedPlans.reduce((sum, plan) => 
-      sum + plan.tasks.filter(task => task.status === 'completed').length, 0
+    const completedTasks = managedPlans.reduce(
+      (sum, plan) => sum + plan.tasks.filter(task => task.status === 'completed').length,
+      0
     );
-    
     return {
       totalPlans: managedPlans.length,
-      activePlans: activePlans.length,
-      completedPlans: completedPlans.length,
+      activePlans: managedPlans.filter(p => p.status === 'in-progress').length,
+      completedPlans: managedPlans.filter(p => p.status === 'completed').length,
       totalTasks,
       completedTasks,
-      completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+      completionRate: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,
     };
   }, [managedPlans]);
 
   // 刷新数据
   const refreshData = useCallback(async () => {
-    // This function is now empty as the observer handles data updates
-  }, []);
+    // This function can now be simpler, or be removed if not needed,
+    // as data is loaded on startup and syncs automatically.
+    // For now, let's make it re-trigger the initial load logic.
+    const load = async () => {
+      if (window.ipcRenderer) {
+        const storedPlans = await window.ipcRenderer.invoke('getAllPlans');
+        if (storedPlans && storedPlans.length > 0) {
+           ydoc.transact(() => {
+              const yPlansArray = storedPlans.map((plan: Plan) => {
+                const planMap = new Y.Map();
+                for (const key in plan) {
+                  if (key === 'tasks') {
+                    const yTasks = new Y.Array();
+                    plan.tasks.forEach(task => {
+                      const taskMap = new Y.Map();
+                      for (const taskKey in task) {
+                        taskMap.set(taskKey, task[taskKey as keyof Task]);
+                      }
+                      yTasks.push([taskMap]);
+                    });
+                    planMap.set(key, yTasks);
+                  } else {
+                    planMap.set(key, plan[key as keyof Plan]);
+                  }
+                }
+                return planMap;
+              });
+              // Clear existing and push new ones
+              yPlans.delete(0, yPlans.length);
+              yPlans.push(yPlansArray);
+            });
+        }
+      }
+    };
+    load();
+  }, [ydoc, yPlans]);
 
   // 创建计划
   const createPlan = useCallback(async (planData: Omit<Plan, 'id' | 'progress' | 'tasks' | 'createdAt' | 'updatedAt'>) => {
