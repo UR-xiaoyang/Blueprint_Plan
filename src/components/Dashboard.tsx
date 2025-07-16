@@ -8,9 +8,10 @@ import Clock from './Clock';
 interface DashboardProps {
   plans: Plan[];
   onPlanSelect: (plan: Plan) => void;
+  onNavigate: (view: 'dashboard' | 'plans' | 'tasks' | 'analytics' | 'settings') => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect }) => {
+const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavigate }) => {
   const getStatusColor = (status: Plan['status']) => {
     switch (status) {
       case 'planning': return 'status-planning';
@@ -154,7 +155,7 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect }) => {
         {plans.length === 0 ? (
           <div className="empty-state">
             <p>还没有任何计划。开始创建您的第一个计划吧！</p>
-            <button className="btn btn-primary">创建计划</button>
+            <button className="btn btn-primary" onClick={() => onNavigate('plans')}>创建计划</button>
           </div>
         ) : (
           <div className="plan-list">

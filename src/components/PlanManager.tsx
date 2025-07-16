@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback, useMemo } from 'react';
+import React, { useState, memo, useCallback, useMemo, useRef } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Plan } from '../App';
 
@@ -8,9 +8,19 @@ interface PlanManagerProps {
   createPlan: (plan: Omit<Plan, 'id' | 'progress' | 'tasks' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updatePlan: (plan: Plan) => Promise<void>;
   deletePlan: (planId: string) => Promise<void>;
+  exportData?: () => Promise<void>;
+  importData?: (jsonData: string) => Promise<void>;
 }
 
-const PlanManager: React.FC<PlanManagerProps> = memo(({ plans, onPlanSelect, createPlan, updatePlan, deletePlan }) => {
+const PlanManager: React.FC<PlanManagerProps> = memo(({ 
+  plans, 
+  onPlanSelect, 
+  createPlan, 
+  updatePlan, 
+  deletePlan,
+  exportData,
+  importData
+}) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [formData, setFormData] = useState({
@@ -20,6 +30,7 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({ plans, onPlanSelect, cre
     endDate: '',
     status: 'planning' as Plan['status']
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -100,6 +111,77 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({ plans, onPlanSelect, cre
     });
   }, []);
 
+  const handleExport = useCallback(async () => {
+    if (exportData) {
+      try {
+        await exportData();
+        // 添加成功提示
+        alert('导出成功！文件已保存到您的下载文件夹。');
+      } catch (error) {
+        console.error('导出失败:', error);
+        alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      }
+    }
+  }, [exportData]);
+
+  const handleImportClick = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!importData) return;
+    
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 检查文件类型
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      alert('请选择有效的JSON文件');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const jsonData = event.target?.result as string;
+        
+        // 尝试解析JSON以验证格式
+        try {
+          JSON.parse(jsonData);
+        } catch (parseError) {
+          alert('文件格式无效，请选择正确的JSON文件');
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+          return;
+        }
+        
+        if (window.confirm('导入将覆盖现有数据，确定要继续吗？')) {
+          try {
+            await importData(jsonData);
+            alert('导入成功！');
+          } catch (importError) {
+            console.error('导入过程中出错:', importError);
+            alert(`导入失败: ${importError instanceof Error ? importError.message : '未知错误'}`);
+          }
+        }
+      } catch (error) {
+        console.error('读取文件失败:', error);
+        alert('读取文件失败，请确保文件格式正确');
+      }
+      // 重置文件输入，以便可以再次选择同一文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  }, [importData]);
+
   const getStatusColor = useCallback((status: Plan['status']) => {
     switch (status) {
       case 'planning': return 'status-planning';
@@ -135,12 +217,45 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({ plans, onPlanSelect, cre
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">我的计划</h3>
-          <button 
-            className="btn btn-primary"
-            onClick={() => setShowCreateForm(true)}
-          >
-            ➕ 创建新计划
-          </button>
+          <div className="card-actions">
+            <button 
+              className="btn btn-primary"
+              onClick={() => setShowCreateForm(true)}
+            >
+              ➕ 创建新计划
+            </button>
+            
+            <div className="import-export-actions">
+              {importData && (
+                <>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={handleImportClick}
+                    title="导入计划"
+                  >
+                    📥 导入
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
+                </>
+              )}
+              
+              {exportData && plans.length > 0 && (
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleExport}
+                  title="导出计划"
+                >
+                  📤 导出
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {showCreateForm && (
@@ -325,7 +440,7 @@ const PlanCard = memo(({
           <div className="progress-bar">
             <div 
               className="progress-fill" 
-              style={{ width: `${plan.progress}%` }}
+              style={{ transform: `scaleX(${plan.progress / 100})` }}
               title={`${plan.progress}%`}
             ></div>
           </div>

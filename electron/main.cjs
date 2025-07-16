@@ -1,5 +1,10 @@
 const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
+
+// Set user data path before app is ready to avoid cache issues
+const userDataPath = path.join(app.getPath('appData'), 'Blueprint-Plan');
+app.setPath('userData', userDataPath);
+
 const api = require('./backend.cjs');
 const p2p = require('./p2p-backend.cjs');
 const Y = require('yjs');
@@ -20,20 +25,28 @@ function createWindow() {
 
   mainWindow.setMenu(null);
 
+  const loadDevServer = (url, retries = 5) => {
+    mainWindow.loadURL(url).catch(err => {
+      console.error(`Failed to load dev server at ${url}, retrying... (${retries} left)`);
+      if (retries > 0) {
+        setTimeout(() => {
+          loadDevServer(url, retries - 1);
+        }, 2000); // Wait 2 seconds and retry
+      } else {
+        console.error('Could not connect to dev server. Please start it manually and restart the app.');
+      }
+    });
+  };
+
   // Load the Vite development server URL or the built HTML file
-  const devServerURL = 'http://localhost:5173'; // Default Vite dev server port
+  const devServerURL = 'http://localhost:8079'; // Vite dev server port
   const buildPath = path.join(__dirname, '../dist/index.html');
 
   // Use app.isPackaged to determine if in development or production
   if (!app.isPackaged) {
-    mainWindow.loadURL(devServerURL).catch(err => {
-      console.error('Failed to load dev server URL, retrying...', err);
-      setTimeout(() => {
-        mainWindow.loadURL(devServerURL);
-      }, 2000); // Wait 2 seconds and retry
-    });
+    loadDevServer(devServerURL);
     // Open the DevTools automatically in development mode.
-    // mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(buildPath);
   }

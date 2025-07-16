@@ -190,8 +190,32 @@ const api = {
   },
 
   importData: (jsonData) => {
-    const data = JSON.parse(jsonData);
-    saveData(data);
+    try {
+      // 尝试解析JSON数据
+      const parsedData = JSON.parse(jsonData);
+      
+      // 检查数据格式
+      if (Array.isArray(parsedData)) {
+        // 如果是数组，假设它是计划数组
+        const data = loadData();
+        data.plans = parsedData;
+        saveData(data);
+        return true;
+      } else if (parsedData && Array.isArray(parsedData.plans)) {
+        // 如果是对象且包含plans数组，使用其plans属性
+        const data = loadData();
+        data.plans = parsedData.plans;
+        saveData(data);
+        return true;
+      } else {
+        // 如果是完整的AppData对象
+        saveData(parsedData);
+        return true;
+      }
+    } catch (error) {
+      console.error('导入数据失败:', error);
+      throw new Error('导入数据失败: ' + error.message);
+    }
   },
 
   greet: (name) => {

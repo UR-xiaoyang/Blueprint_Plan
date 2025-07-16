@@ -7,12 +7,10 @@ import { useOnlineStatus } from './useOnlineStatus';
 // Define the exposed electron API on the window object for TypeScript
 declare global {
   interface Window {
-    electron: {
-      ipcRenderer: {
-        invoke(channel: string, ...args: any[]): Promise<any>;
-        send(channel: string, ...args: any[]): void;
-        on(channel: string, listener: (...args: any[]) => void): () => void;
-      };
+    ipcRenderer: {
+      invoke(channel: string, ...args: any[]): Promise<any>;
+      send(channel: string, ...args: any[]): void;
+      on(channel: string, listener: (...args: any[]) => void): () => void;
     };
   }
 }
@@ -72,7 +70,7 @@ export const useYjs = () => {
       isInitialized = true;
 
       // 1. Get initial data from the main process (which loaded it from LevelDB).
-      const initialState = await window.electron.ipcRenderer.invoke('yjs:get-initial-state');
+      const initialState = await window.ipcRenderer.invoke('yjs:get-initial-state');
       Y.applyUpdate(ydoc, new Uint8Array(initialState), 'main');
 
       if (unmounted) return;
@@ -85,7 +83,7 @@ export const useYjs = () => {
       // 3. Listen for local ydoc changes and send them to the main process for persistence.
       const localUpdateHandler = (update: Uint8Array, origin: any) => {
         if (origin !== 'main') { // Don't echo updates that came from the main process.
-          window.electron.ipcRenderer.send('yjs:update-from-renderer', update);
+          window.ipcRenderer.send('yjs:update-from-renderer', update);
         }
       };
       ydoc.on('update', localUpdateHandler);
@@ -94,7 +92,7 @@ export const useYjs = () => {
       const remoteUpdateHandler = (update: Uint8Array) => {
         Y.applyUpdate(ydoc, update, 'main');
       };
-      window.electron.ipcRenderer.on('yjs:update-from-main', remoteUpdateHandler);
+      window.ipcRenderer.on('yjs:update-from-main', remoteUpdateHandler);
 
       // 5. Force re-render on any change to the shared types.
       const rerenderHandler = () => setVersion(v => v + 1);

@@ -400,7 +400,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
 }
 
 .card-title {
@@ -439,13 +440,19 @@ body {
 }
 
 .btn-secondary {
-  background-color: var(--secondary-color);
-  color: white;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .btn-secondary:hover {
-  background-color: #475569;
-  transform: translateY(-1px);
+  background-color: #e0e0e0;
 }
 
 .btn-success {
@@ -1050,6 +1057,22 @@ body {
   .plan-list-container {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+  }
+
+  .card-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .import-export-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .btn-secondary, .btn-primary {
+    width: 48%;
+    text-align: center;
   }
 }
 
@@ -2197,4 +2220,31 @@ body {
   font-size: 0.9rem;
   color: #64748b;
   margin-top: 0.5rem;
+}
+
+/* 添加导入导出功能的样式 */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.import-export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
 }

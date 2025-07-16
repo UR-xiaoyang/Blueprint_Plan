@@ -60,7 +60,9 @@ const App: React.FC = memo(() => {
     createTask,
     updateTask,
     deleteTask,
-    refreshData
+    refreshData,
+    exportData,
+    importData
   } = usePlanManager();
 
   // 检测移动设备
@@ -122,7 +124,7 @@ const App: React.FC = memo(() => {
   }, [stats]);
 
   // 使用useCallback优化渲染函数
-  const renderContent = useCallback(() => {
+  const renderContent = () => {
     if (loading) {
       return (
         <div className="loading-container">
@@ -152,6 +154,7 @@ const App: React.FC = memo(() => {
           <Dashboard 
             plans={plans} 
             onPlanSelect={handlePlanSelect}
+            onNavigate={handleViewChange}
           />
         );
       case 'plans':
@@ -162,6 +165,8 @@ const App: React.FC = memo(() => {
             createPlan={createPlan}
             updatePlan={updatePlan}
             deletePlan={deletePlan}
+            exportData={exportData}
+            importData={importData}
           />
         );
       case 'tasks':
@@ -182,10 +187,11 @@ const App: React.FC = memo(() => {
           <Dashboard 
             plans={plans} 
             onPlanSelect={handlePlanSelect}
+            onNavigate={handleViewChange}
           />
         );
     }
-  }, [currentView, plans, selectedPlan, loading, error, handlePlanSelect, createPlan, updatePlan, deletePlan, createTask, updateTask, deleteTask, refreshData]);
+  };
 
   return (
     <div className={`app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobile ? 'mobile' : ''}`}>

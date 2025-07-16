@@ -84,7 +84,7 @@ export const usePlanManager = (): UsePlanManagerReturn => {
 
   useEffect(() => {
     const syncPlans = () => {
-      const plans = yPlans.toArray().map(p => ymapToJs(p) as Plan);
+      const plans = yPlans.toArray().map(p => yjsToPlan(p));
       setManagedPlans(plans);
       debouncedSave(plans);
     };
@@ -297,6 +297,17 @@ export const usePlanManager = (): UsePlanManagerReturn => {
       ydoc.transact(() => {
         tasksArray.push([taskMap]);
         planMap.set('updatedAt', new Date().toISOString());
+        
+        // 计算并更新计划进度
+        const allTasks = [...tasksArray.toArray(), taskMap]; // 包括新添加的任务
+        const totalTasks = allTasks.length;
+        if (totalTasks > 0) {
+          const completedTasks = allTasks.filter(t => t.get('status') === 'completed').length;
+          const progress = Math.round((completedTasks / totalTasks) * 100);
+          planMap.set('progress', progress);
+        } else {
+          planMap.set('progress', 0);
+        }
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建任务失败');
@@ -318,13 +329,35 @@ export const usePlanManager = (): UsePlanManagerReturn => {
       
       const taskMap = tasksArray.get(taskIndex);
       ydoc.transact(() => {
+        // 更新任务属性
         taskMap.set('title', task.title);
         taskMap.set('description', task.description);
         taskMap.set('status', task.status);
         taskMap.set('dueDate', task.dueDate);
         taskMap.set('priority', task.priority);
         taskMap.set('updatedAt', new Date().toISOString());
+        
+        // 更新计划的时间戳
         planMap.set('updatedAt', new Date().toISOString());
+        
+        // 计算并更新计划进度
+        const allTasks = tasksArray.toArray();
+        const totalTasks = allTasks.length;
+        if (totalTasks > 0) {
+          // 在计算时，需要考虑当前事务中被修改的状态
+          const completedTasks = allTasks.filter(t => {
+            // 如果是当前正在更新的任务，使用传入的新状态判断
+            if (t.get('id') === task.id) {
+              return task.status === 'completed';
+            }
+            // 其他任务，使用它们当前的状态
+            return t.get('status') === 'completed';
+          }).length;
+          const progress = Math.round((completedTasks / totalTasks) * 100);
+          planMap.set('progress', progress);
+        } else {
+          planMap.set('progress', 0);
+        }
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : '更新任务失败');
@@ -347,6 +380,17 @@ export const usePlanManager = (): UsePlanManagerReturn => {
       ydoc.transact(() => {
         tasksArray.delete(taskIndex, 1);
         planMap.set('updatedAt', new Date().toISOString());
+        
+        // 计算并更新计划进度
+        const allTasks = tasksArray.toArray();
+        const totalTasks = allTasks.length;
+        if (totalTasks > 0) {
+          const completedTasks = allTasks.filter(t => t.get('status') === 'completed').length;
+          const progress = Math.round((completedTasks / totalTasks) * 100);
+          planMap.set('progress', progress);
+        } else {
+          planMap.set('progress', 0);
+        }
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : '删除任务失败');
@@ -358,18 +402,36 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   const exportData = useCallback(async () => {
     try {
       setError(null);
-      const jsonData = JSON.stringify(managedPlans, null, 2);
-      const blob = new Blob([jsonData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
       
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `blueprint-plan-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      URL.revokeObjectURL(url);
+      if (window.ipcRenderer) {
+        // Electron环境：使用后端API导出
+        const jsonData = await window.ipcRenderer.invoke('exportData');
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `blueprint-plan-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+      } else {
+        // 纯Web环境：直接导出当前状态
+        const jsonData = JSON.stringify(managedPlans, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `blueprint-plan-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '导出数据失败');
       throw err;
@@ -380,37 +442,64 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   const importData = useCallback(async (jsonData: string) => {
     try {
       setError(null);
-      const data = JSON.parse(jsonData) as Plan[];
-      // Caution: This is a destructive import. It clears existing data.
-      ydoc.transact(() => {
-        yPlans.delete(0, yPlans.length);
-        const newYPlans = data.map(plan => {
-          const planMap = new Y.Map();
-          for (const key in plan) {
-            if (key === 'tasks') {
-              const yTasks = new Y.Array();
-              const tasks = (plan[key] as unknown as Task[]).map(task => {
-                const taskMap = new Y.Map();
-                for (const tKey in task) {
-                  taskMap.set(tKey, task[tKey as keyof Task]);
-                }
-                return taskMap;
-              });
-              yTasks.push(tasks);
-              planMap.set(key, yTasks);
-            } else {
-              planMap.set(key, plan[key as keyof Plan]);
-            }
+      
+      if (window.ipcRenderer) {
+        // Electron环境：使用后端API导入
+        try {
+          // 首先解析JSON以验证其有效性
+          const parsedData = JSON.parse(jsonData);
+          
+          // 检查是否是有效的数据格式
+          if (Array.isArray(parsedData) || (parsedData && Array.isArray(parsedData.plans))) {
+            // 如果是数组，假设它是计划数组
+            const plansToImport = Array.isArray(parsedData) ? parsedData : parsedData.plans;
+            
+            // 调用后端API
+            await window.ipcRenderer.invoke('saveAllPlans', plansToImport);
+            
+            // 刷新数据
+            await refreshData();
+          } else {
+            throw new Error('无效的数据格式');
           }
-          return planMap;
+        } catch (parseError) {
+          console.error('JSON解析错误:', parseError);
+          throw new Error('导入的JSON格式无效');
+        }
+      } else {
+        // 纯Web环境：直接导入到Yjs文档
+        const data = JSON.parse(jsonData) as Plan[];
+        // Caution: This is a destructive import. It clears existing data.
+        ydoc.transact(() => {
+          yPlans.delete(0, yPlans.length);
+          const newYPlans = data.map(plan => {
+            const planMap = new Y.Map();
+            for (const key in plan) {
+              if (key === 'tasks') {
+                const yTasks = new Y.Array();
+                const tasks = (plan[key] as unknown as Task[]).map(task => {
+                  const taskMap = new Y.Map();
+                  for (const tKey in task) {
+                    taskMap.set(tKey, task[tKey as keyof Task]);
+                  }
+                  return taskMap;
+                });
+                yTasks.push(tasks);
+                planMap.set(key, yTasks);
+              } else {
+                planMap.set(key, plan[key as keyof Plan]);
+              }
+            }
+            return planMap;
+          });
+          yPlans.push(newYPlans);
         });
-        yPlans.push(newYPlans);
-      });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '导入数据失败');
       throw err;
     }
-  }, [ydoc, yPlans]);
+  }, [ydoc, yPlans, refreshData]);
 
   // 查询函数
   const getPlanById = useCallback((planId: string): Plan | undefined => {
