@@ -27,6 +27,8 @@ jobs:
 
       - name: Build application
         run: npm run dist
+        env:
+          ELECTRON_BUILDER_7Z_ALLOW_UNSAFE_SYMLINKS: "true"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
