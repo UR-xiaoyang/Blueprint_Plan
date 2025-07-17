@@ -63,6 +63,19 @@
     "directories": {
       "buildResources": "assets",
       "output": "release"
+    },
+    "win": {
+      "target": "msi"
+    },
+    "mac": {
+      "target": "pkg"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "tar.gz"
+      ]
     }
   }
 }
