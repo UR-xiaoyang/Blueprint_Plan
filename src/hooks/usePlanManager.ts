@@ -3,15 +3,6 @@ import * as Y from 'yjs';
 import { Plan, Task } from '../App';
 import { useYjs } from './useYjs';
 
-// 为 window.ipcRenderer 添加类型定义
-declare global {
-  interface Window {
-    ipcRenderer: {
-      invoke: (channel: string, ...args: any[]) => Promise<any>;
-    };
-  }
-}
-
 export interface PlanStats {
   totalPlans: number;
   activePlans: number;
