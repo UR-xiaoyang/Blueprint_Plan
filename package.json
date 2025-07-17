@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "description": "An application for managing blueprints and plans",
-  "author": "UR-xiaoyang",
+  "author": {
+    "name": "URxiaoyang"
+  },
   "productName": "Blueprint Plan",
   "type": "module",
   "scripts": {
@@ -59,6 +61,7 @@
   "main": "electron/main.cjs",
   "build": {
     "appId": "com.yourcompany.blueprintplan",
+    "productName": "Blueprint Plan",
     "asarUnpack": [
       "**/node_modules/@ant-design/colors/**/*"
     ],
@@ -82,9 +85,6 @@
         "rpm",
         "tar.gz"
       ]
-    },
-    "msi": {
-      "manufacturer": "UR-xiaoyang"
     }
   }
 }
