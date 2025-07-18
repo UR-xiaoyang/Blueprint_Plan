@@ -3,9 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "description": "An application for managing blueprints and plans",
-  "author": {
-    "name": "URxiaoyang"
-  },
+  "author": "URxiaoyang",
+  "copyright": "Copyright © 2024 URxiaoyang",
   "productName": "Blueprint Plan",
   "type": "module",
   "scripts": {
@@ -60,7 +59,6 @@
   },
   "main": "electron/main.cjs",
   "build": {
-    "publisherName": "URxiaoyang",
     "appId": "com.yourcompany.blueprintplan",
     "productName": "Blueprint Plan",
     "asarUnpack": [
@@ -75,7 +73,7 @@
       "output": "release"
     },
     "win": {
-      "target": "msi"
+      "target": "nsis"
     },
     "mac": {
       "target": "pkg"
