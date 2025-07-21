@@ -83,7 +83,8 @@
         "deb",
         "rpm",
         "tar.gz"
-      ]
+      ],
+      "maintainer": "URxiaoyang <xiaoyang@ur-xiaoyang.com>"
     }
   }
 }
