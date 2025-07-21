@@ -64,3 +64,31 @@ jobs:
         with:
           name: ${{ matrix.os }}-build
           path: release/ 
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Install gh CLI
+        run: sudo apt-get install gh
+
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        run: |
+          gh release create v${{ steps.get_version.outputs.VERSION }} --title "Release v${{ steps.get_version.outputs.VERSION }}" --notes "Automated release" --draft
+          for artifact in artifacts/*/*; do
+            gh release upload v${{ steps.get_version.outputs.VERSION }} "$artifact"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} 
