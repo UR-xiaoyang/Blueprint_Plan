@@ -90,6 +90,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      - name: Delete existing git tag if it exists
+        run: |
+          git tag -d v${{ steps.get_version.outputs.VERSION }} || true
+          git push origin --delete v${{ steps.get_version.outputs.VERSION }} || true
+
       - name: Create Release
         run: |
           gh release create v${{ steps.get_version.outputs.VERSION }} --title "Release v${{ steps.get_version.outputs.VERSION }}" --notes "Automated release" --draft
