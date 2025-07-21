@@ -87,8 +87,8 @@ jobs:
       - name: Create Release
         run: |
           gh release create v${{ steps.get_version.outputs.VERSION }} --title "Release v${{ steps.get_version.outputs.VERSION }}" --notes "Automated release" --draft
-          for artifact in artifacts/*/*; do
-            gh release upload v${{ steps.get_version.outputs.VERSION }} "$artifact"
+          for file in $(find artifacts -type f); do
+            gh release upload v${{ steps.get_version.outputs.VERSION }} "$file"
           done
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }} 
