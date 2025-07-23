@@ -97,18 +97,17 @@ jobs:
 
       - name: Create Release
         run: |
-          gh release create v${{ steps.get_version.outputs.VERSION }} --title "Release v${{ steps.get_version.outputs.VERSION }}" --notes "Automated release" --draft
+          gh release create v${{ steps.get_version.outputs.VERSION }} --title "Release v${{ steps.get_version.outputs.VERSION }}" --generate-notes --draft
           
           find artifacts -type f \( \
-            -name "*.exe" -o \
+            -name "*.exe" -not -name "elevate.exe" -o \
             -name "*.dmg" -o \
             -name "*.pkg" -o \
             -name "*.deb" -o \
             -name "*.rpm" -o \
             -name "*.AppImage" -o \
             -name "*.tar.gz" -o \
-            -name "*.zip" -o \
-            -name "*.blockmap" \
+            -name "*.zip" \
           \) -exec gh release upload v${{ steps.get_version.outputs.VERSION }} {} +
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }} 

@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback, useMemo, useRef } from 'react';
+import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
 import { FixedSizeGrid as Grid } from 'react-window';
 import { Plan } from '../App';
 
@@ -12,7 +12,7 @@ interface PlanManagerProps {
   importData?: (jsonData: string) => Promise<void>;
 }
 
-const PlanManager: React.FC<PlanManagerProps> = memo(({ 
+const PlanManager: FC<PlanManagerProps> = memo(({ 
   plans, 
   onPlanSelect, 
   createPlan, 
@@ -88,6 +88,46 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({
     setShowCreateForm(true);
   }, []);
 
+  const handleDownloadGenericTemplate = () => {
+    const genericPlan = {
+      id: "请为每个计划提供一个唯一ID，或留空由系统自动生成",
+      title: "你的计划标题",
+      description: "你的计划描述",
+      status: "planning",
+      startDate: "YYYY-MM-DD",
+      endDate: "YYYY-MM-DD",
+      tasks: [
+        {
+          id: "请为每个任务提供一个唯一ID，或留空由系统自动生成",
+          title: "任务1标题",
+          description: "任务1描述",
+          status: "todo",
+          priority: "medium",
+          startDate: "YYYY-MM-DD",
+          dueDate: "YYYY-MM-DD"
+        }
+      ]
+    };
+
+    // 提示用户可以复制这个结构来创建多个计划
+    const fileContent = [
+      genericPlan
+    ];
+    
+    const jsonData = JSON.stringify(fileContent, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'plan_template.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  };
+
   const handleDelete = useCallback(async (planId: string) => {
     if (window.confirm('确定要删除这个计划吗？此操作无法撤销。')) {
       try {
@@ -161,7 +201,7 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({
           return;
         }
         
-        if (window.confirm('导入将覆盖现有数据，确定要继续吗？')) {
+        if (window.confirm('这将根据文件内容更新或添加计划，确定要继续吗？')) {
           try {
             await importData(jsonData);
             alert('导入成功！');
@@ -224,6 +264,13 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({
             >
               ➕ 创建新计划
             </button>
+            <button
+              className="btn btn-secondary"
+              onClick={handleDownloadGenericTemplate}
+              title="下载一个空的JSON模板文件，用于编辑后批量导入"
+            >
+              📄 下载通用模板
+            </button>
             
             <div className="import-export-actions">
               {importData && (
@@ -268,11 +315,13 @@ const PlanManager: React.FC<PlanManagerProps> = memo(({
           />
         )}
 
-        {plans.length === 0 ? (
+        {plans.length === 0 && !showCreateForm && (
           <div className="empty-state">
             <p>还没有任何计划。点击上方按钮创建您的第一个计划！</p>
           </div>
-        ) : (
+        )}
+
+        {plans.length > 0 && (
           <div className="plan-list-container">
             {sortedPlans.map(plan => (
               <PlanCard

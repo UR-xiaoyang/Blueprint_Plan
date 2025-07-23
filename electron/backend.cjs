@@ -96,7 +96,10 @@ const api = {
     plan.createdAt = new Date().toISOString();
     plan.updatedAt = plan.createdAt;
     plan.progress = 0.0;
+    // 如果没有提供任务，则初始化为空数组
+    if (!plan.tasks) {
     plan.tasks = [];
+    }
     data.plans.push(plan);
     saveData(data);
     return plan;
@@ -191,27 +194,57 @@ const api = {
 
   importData: (jsonData) => {
     try {
-      // 尝试解析JSON数据
-      const parsedData = JSON.parse(jsonData);
+      const data = loadData();
+      const newPlans = JSON.parse(jsonData);
       
-      // 检查数据格式
-      if (Array.isArray(parsedData)) {
-        // 如果是数组，假设它是计划数组
-        const data = loadData();
-        data.plans = parsedData;
-        saveData(data);
-        return true;
-      } else if (parsedData && Array.isArray(parsedData.plans)) {
-        // 如果是对象且包含plans数组，使用其plans属性
-        const data = loadData();
-        data.plans = parsedData.plans;
-        saveData(data);
-        return true;
-      } else {
-        // 如果是完整的AppData对象
-        saveData(parsedData);
-        return true;
+      if (!Array.isArray(newPlans)) {
+        throw new Error('导入的数据必须是一个包含计划的JSON数组。');
       }
+      
+      const planPlaceholderId = "请为每个计划提供一个唯一ID，或留空由系统自动生成";
+      const taskPlaceholderId = "请为每个任务提供一个唯一ID，或留空由系统自动生成";
+
+      newPlans.forEach(newPlan => {
+        // 如果计划ID为空或是占位符，则始终视为新计划
+        const isTemplatePlan = !newPlan.id || newPlan.id === planPlaceholderId;
+        const existingPlanIndex = isTemplatePlan ? -1 : data.plans.findIndex(p => p.id === newPlan.id);
+
+        if (existingPlanIndex !== -1) {
+          // 更新现有计划
+          data.plans[existingPlanIndex] = {
+            ...data.plans[existingPlanIndex],
+            ...newPlan,
+            updatedAt: new Date().toISOString()
+          };
+        } else {
+          // 添加新计划
+          const newPlanId = Date.now().toString() + Math.random().toString(36).substring(2, 9);
+          
+          // 确保新计划内的任务也获得唯一的ID
+          const tasksWithUniqueIds = (newPlan.tasks || []).map(task => {
+             const isTemplateTask = !task.id || task.id === taskPlaceholderId;
+             return {
+                ...task,
+                id: isTemplateTask ? Date.now().toString() + Math.random().toString(36).substring(2, 9) : task.id,
+                planId: newPlanId, // 关联到新的计划ID
+                createdAt: task.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+             };
+          });
+
+          data.plans.push({
+            ...newPlan,
+            id: newPlanId,
+            tasks: tasksWithUniqueIds,
+            createdAt: newPlan.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            progress: newPlan.progress || 0
+          });
+        }
+      });
+      
+        saveData(data);
+        return true;
     } catch (error) {
       console.error('导入数据失败:', error);
       throw new Error('导入数据失败: ' + error.message);
