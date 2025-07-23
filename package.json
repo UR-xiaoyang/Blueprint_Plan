@@ -1,10 +1,10 @@
 {
   "name": "blueprint-plan",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "An application for managing blueprints and plans",
   "author": "URxiaoyang",
-  "copyright": "Copyright © 2024 URxiaoyang",
+  "copyright": "Copyright © 2025 URxiaoyang",
   "productName": "Blueprint Plan",
   "type": "module",
   "scripts": {
