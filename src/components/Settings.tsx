@@ -1,10 +1,8 @@
 import React from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const Settings: React.FC = () => {
   const { themeMode, setThemeMode, schedule, setSchedule } = useTheme();
-  const { isOnline, toggleOnline } = useOnlineStatus();
 
   const handleThemeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setThemeMode(event.target.value as typeof themeMode);
@@ -80,20 +78,6 @@ const Settings: React.FC = () => {
               </label>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="setting-section">
-        <h3>在线模式</h3>
-        <div className="setting-option">
-          <label>
-            <input 
-              type="checkbox" 
-              checked={isOnline} 
-              onChange={toggleOnline} 
-            />
-            启用在线同步
-          </label>
         </div>
       </div>
     </div>

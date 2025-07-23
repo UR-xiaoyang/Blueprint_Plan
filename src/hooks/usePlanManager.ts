@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as Y from 'yjs';
 import { Plan, Task } from '../App';
 import { useYjs } from './useYjs';
-
+// 计划统计信息
 export interface PlanStats {
   totalPlans: number;
   activePlans: number;
@@ -11,7 +11,7 @@ export interface PlanStats {
   completedTasks: number;
   completionRate: number;
 }
-
+ // 计划管理器返回值
 export interface UsePlanManagerReturn {
   // 状态
   plans: Plan[];
@@ -163,41 +163,48 @@ export const usePlanManager = (): UsePlanManagerReturn => {
 
   // 刷新数据
   const refreshData = useCallback(async () => {
-    // This function can now be simpler, or be removed if not needed,
-    // as data is loaded on startup and syncs automatically.
-    // For now, let's make it re-trigger the initial load logic.
-    const load = async () => {
-      if (window.ipcRenderer) {
-        const storedPlans = await window.ipcRenderer.invoke('getAllPlans');
-        if (storedPlans && storedPlans.length > 0) {
-           ydoc.transact(() => {
-              const yPlansArray = storedPlans.map((plan: Plan) => {
-                const planMap = new Y.Map();
-                for (const key in plan) {
-                  if (key === 'tasks') {
-                    const yTasks = new Y.Array();
-                    plan.tasks.forEach(task => {
-                      const taskMap = new Y.Map();
-                      for (const taskKey in task) {
-                        taskMap.set(taskKey, task[taskKey as keyof Task]);
-                      }
-                      yTasks.push([taskMap]);
-                    });
-                    planMap.set(key, yTasks);
-                  } else {
-                    planMap.set(key, plan[key as keyof Plan]);
+    // This function reloads all plan data from the main process backend
+    // and synchronizes the Yjs document, which in turn updates the UI state.
+    if (window.ipcRenderer) {
+      try {
+        const storedPlans: Plan[] = await window.ipcRenderer.invoke('getAllPlans');
+        
+        // `storedPlans` can be an empty array if all plans are deleted.
+        // We need to transact to ensure atomicity of the update.
+        ydoc.transact(() => {
+          const yPlansArray = storedPlans.map((plan: Plan) => {
+            const planMap = new Y.Map();
+            for (const key in plan) {
+              if (key === 'tasks') {
+                const yTasks = new Y.Array();
+                (plan.tasks || []).forEach(task => {
+                  const taskMap = new Y.Map();
+                  for (const taskKey in task) {
+                    taskMap.set(taskKey, task[taskKey as keyof Task]);
                   }
-                }
-                return planMap;
-              });
-              // Clear existing and push new ones
-              yPlans.delete(0, yPlans.length);
-              yPlans.push(yPlansArray);
-            });
-        }
+                  yTasks.push([taskMap]);
+                });
+                planMap.set(key, yTasks);
+              } else {
+                planMap.set(key, plan[key as keyof Plan]);
+              }
+            }
+            return planMap;
+          });
+
+          // Atomically replace the entire content of the yPlans array.
+          yPlans.delete(0, yPlans.length);
+          if (yPlansArray.length > 0) {
+            yPlans.push(yPlansArray);
+          }
+        });
+
+      } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : '刷新数据失败';
+        setError(errorMessage);
+        console.error('刷新数据失败:', e);
       }
-    };
-    load();
+    }
   }, [ydoc, yPlans]);
 
   // 创建计划
@@ -433,46 +440,58 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   const importData = useCallback(async (jsonData: string) => {
     try {
       setError(null);
+      console.log('[usePlanManager] importData called with:', jsonData);
       
       if (window.ipcRenderer) {
-        // Electron环境：使用后端API导入
+        // Electron环境：使用后端的非破坏性导入API
         try {
-          // 首先解析JSON以验证其有效性
-          const parsedData = JSON.parse(jsonData);
+          console.log('[usePlanManager] Electron environment. Calling backend importData.');
+          // 直接调用后端的 importData，它会处理ID生成和保存
+          await window.ipcRenderer.invoke('importData', jsonData);
           
-          // 检查是否是有效的数据格式
-          if (Array.isArray(parsedData) || (parsedData && Array.isArray(parsedData.plans))) {
-            // 如果是数组，假设它是计划数组
-            const plansToImport = Array.isArray(parsedData) ? parsedData : parsedData.plans;
-            
-            // 调用后端API
-            await window.ipcRenderer.invoke('saveAllPlans', plansToImport);
-            
-            // 刷新数据
-            await refreshData();
-          } else {
-            throw new Error('无效的数据格式');
-          }
-        } catch (parseError) {
-          console.error('JSON解析错误:', parseError);
-          throw new Error('导入的JSON格式无效');
+          // 刷新数据以在UI中显示新添加的计划
+          console.log('[usePlanManager] Refreshing data after import.');
+          await refreshData();
+        } catch (e) {
+          console.error('导入数据失败:', e);
+          const errorMessage = e instanceof Error ? e.message : '未知导入错误';
+          setError(errorMessage);
+          throw new Error(errorMessage);
         }
       } else {
-        // 纯Web环境：直接导入到Yjs文档
+        // 纯Web环境：直接导入到Yjs文档 (修改为非破坏性)
+        console.log('[usePlanManager] Web environment. Applying changes to Yjs doc.');
         const data = JSON.parse(jsonData) as Plan[];
-        // Caution: This is a destructive import. It clears existing data.
+        
         ydoc.transact(() => {
-          yPlans.delete(0, yPlans.length);
+          console.log('[usePlanManager] Appending new plans to Yjs doc.');
           const newYPlans = data.map(plan => {
+            const newPlanId = `${Date.now()}-${Math.random()}`; // 创建唯一ID
             const planMap = new Y.Map();
+            
+            // 复制 plan 属性, 但使用新ID
             for (const key in plan) {
-              if (key === 'tasks') {
+              if (key === 'id') {
+                planMap.set('id', newPlanId);
+              } else if (key === 'tasks') {
                 const yTasks = new Y.Array();
-                const tasks = (plan[key] as unknown as Task[]).map(task => {
+                const tasks = (plan.tasks || []).map(task => {
                   const taskMap = new Y.Map();
+                  const newTaskId = `${Date.now()}-${Math.random()}`; // 创建唯一任务ID
                   for (const tKey in task) {
-                    taskMap.set(tKey, task[tKey as keyof Task]);
+                    if (tKey === 'id') {
+                      taskMap.set('id', newTaskId);
+                    } else if (tKey === 'planId') {
+                      taskMap.set('planId', newPlanId);
+                    } else {
+                      taskMap.set(tKey, task[tKey as keyof Task]);
+                    }
                   }
+                  // 确保任务有创建和更新时间
+                  if (!taskMap.has('createdAt')) {
+                    taskMap.set('createdAt', new Date().toISOString());
+                  }
+                  taskMap.set('updatedAt', new Date().toISOString());
                   return taskMap;
                 });
                 yTasks.push(tasks);
@@ -481,12 +500,19 @@ export const usePlanManager = (): UsePlanManagerReturn => {
                 planMap.set(key, plan[key as keyof Plan]);
               }
             }
+             // 确保计划有创建和更新时间
+            if (!planMap.has('createdAt')) {
+              planMap.set('createdAt', new Date().toISOString());
+            }
+            planMap.set('updatedAt', new Date().toISOString());
+
             return planMap;
           });
           yPlans.push(newYPlans);
         });
       }
     } catch (err) {
+      console.error('[usePlanManager] importData error:', err);
       setError(err instanceof Error ? err.message : '导入数据失败');
       throw err;
     }

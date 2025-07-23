@@ -46,7 +46,7 @@ function createWindow() {
   if (!app.isPackaged) {
     loadDevServer(devServerURL);
     // Open the DevTools automatically in development mode.
-    // mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(buildPath);
   }

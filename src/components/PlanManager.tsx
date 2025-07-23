@@ -170,56 +170,24 @@ const PlanManager: FC<PlanManagerProps> = memo(({
     }
   }, []);
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!importData) return;
-    
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    // 检查文件类型
-    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
-      alert('请选择有效的JSON文件');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
+    if (file && importData) {
       try {
-        const jsonData = event.target?.result as string;
-        
-        // 尝试解析JSON以验证格式
-        try {
-          JSON.parse(jsonData);
-        } catch (parseError) {
-          alert('文件格式无效，请选择正确的JSON文件');
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          return;
-        }
-        
-        if (window.confirm('这将根据文件内容更新或添加计划，确定要继续吗？')) {
-          try {
-            await importData(jsonData);
-            alert('导入成功！');
-          } catch (importError) {
-            console.error('导入过程中出错:', importError);
-            alert(`导入失败: ${importError instanceof Error ? importError.message : '未知错误'}`);
-          }
-        }
+        const jsonData = await file.text();
+        console.log('[PlanManager] File content read:', jsonData); // 打印文件内容
+        await importData(jsonData);
+        alert('计划导入成功！');
       } catch (error) {
-        console.error('读取文件失败:', error);
-        alert('读取文件失败，请确保文件格式正确');
+        console.error('导入失败:', error);
+        alert(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      } finally {
+        // 重置 input，以便可以再次选择同一个文件
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
-      // 重置文件输入，以便可以再次选择同一文件
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsText(file);
+    }
   }, [importData]);
 
   const getStatusColor = useCallback((status: Plan['status']) => {

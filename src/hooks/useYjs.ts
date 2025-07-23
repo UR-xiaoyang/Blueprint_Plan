@@ -1,8 +1,8 @@
 import * as Y from 'yjs';
-import { WebrtcProvider } from 'y-webrtc';
+// import { WebrtcProvider } from 'y-webrtc'; // No longer needed
 import { useState, useEffect, useCallback } from 'react';
 import { Awareness } from 'y-protocols/awareness';
-import { useOnlineStatus } from './useOnlineStatus';
+// import { useOnlineStatus } from './useOnlineStatus'; // No longer needed
 
 // Define the exposed electron API on the window object for TypeScript
 declare global {
@@ -19,23 +19,25 @@ declare global {
 // This ensures all components share the same collaborative state.
 const ydoc = new Y.Doc();
 // We will initialize the provider once we have the data from main.
-let provider: WebrtcProvider | null = null;
-let awareness: Awareness | null = null;
+// let provider: WebrtcProvider | null = null; // No longer needed
+let awareness: Awareness | null = new Awareness(ydoc); // Directly create awareness
 
 // Flag to ensure initialization only happens once.
 let isInitialized = false;
 
 // --- Custom Hook ---
 export const useYjs = () => {
-  const [isConnected, setIsConnected] = useState(provider?.connected || false);
+  // const [isConnected, setIsConnected] = useState(false); // No longer needed, always offline
   // A simple counter to trigger re-renders when the Y.Array changes.
   const [, setVersion] = useState(0);
-  const { isOnline } = useOnlineStatus();
+  // const { isOnline } = useOnlineStatus(); // No longer needed
 
+  /*
+  // All provider-related logic is no longer needed in forced-offline mode.
   const connectProvider = useCallback(() => {
     if (!provider) {
       provider = new WebrtcProvider('blueprint-plan-sync-room', ydoc, {
-        signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com']
+        signaling: ['wss://signaling.yjs.dev']
       });
       awareness = provider.awareness;
       provider.on('status', statusHandler);
@@ -56,6 +58,7 @@ export const useYjs = () => {
   const statusHandler = useCallback(({ connected }: { connected: boolean }) => {
     setIsConnected(connected);
   }, []);
+  */
 
   useEffect(() => {
     let unmounted = false;
@@ -64,7 +67,7 @@ export const useYjs = () => {
     const initialize = async () => {
       if (isInitialized) {
         // If already initialized, just ensure the component state is up to date.
-        setIsConnected(provider?.connected || false);
+        // setIsConnected(false); // No longer needed
         return;
       }
       isInitialized = true;
@@ -75,10 +78,10 @@ export const useYjs = () => {
 
       if (unmounted) return;
 
-      // 2. Setup the WebRTC provider for P2P communication if online.
-      if (isOnline) {
-        connectProvider();
-      }
+      // 2. Setup the WebRTC provider for P2P communication if online. (REMOVED)
+      // if (isOnline) {
+      //   connectProvider();
+      // }
 
       // 3. Listen for local ydoc changes and send them to the main process for persistence.
       const localUpdateHandler = (update: Uint8Array, origin: any) => {
@@ -104,15 +107,19 @@ export const useYjs = () => {
     
     return () => {
       unmounted = true;
+      // No provider to destroy anymore
+      /*
       if (provider) {
         provider.off('status', statusHandler);
         provider.destroy();
         provider = null;
         awareness = null;
       }
+      */
     };
-  }, [isOnline, connectProvider, disconnectProvider]); // Re-run when online status changes.
+  }, []); // Dependencies on online status are removed.
 
+  /*
   useEffect(() => {
     if (isOnline) {
       connectProvider();
@@ -120,11 +127,12 @@ export const useYjs = () => {
       disconnectProvider();
     }
   }, [isOnline, connectProvider, disconnectProvider]);
+  */
 
   return {
     ydoc,
     plans: ydoc.getArray<Y.Map<any>>('plans'),
     awareness,
-    isConnected, // WebRTC provider connection status
+    isConnected: false, // Always return false for connection status
   };
 }; 
