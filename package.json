@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.2.1",
   "description": "An application for managing blueprints and plans",
+  "license": "GPL-3.0-or-later",
   "author": "URxiaoyang",
   "copyright": "Copyright © 2025 URxiaoyang",
   "productName": "Blueprint Plan",
