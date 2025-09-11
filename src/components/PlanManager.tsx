@@ -1,6 +1,19 @@
 import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
-import { FixedSizeGrid as Grid } from 'react-window';
-import { Plan } from '../App';
+
+// Assuming 'Plan' is a global type or imported from another file.
+// If not, it should be defined here.
+// interface Plan {
+//   id: string;
+//   title: string;
+//   description: string;
+//   startDate: string;
+//   endDate: string;
+//   status: 'planning' | 'in-progress' | 'completed' | 'archived';
+//   progress: number;
+//   tasks: any[]; // Define task type properly
+//   createdAt: string;
+//   updatedAt: string;
+// }
 
 interface PlanManagerProps {
   plans: Plan[];
@@ -12,320 +25,30 @@ interface PlanManagerProps {
   importData?: (jsonData: string) => Promise<void>;
 }
 
-const PlanManager: FC<PlanManagerProps> = memo(({ 
-  plans, 
-  onPlanSelect, 
-  createPlan, 
-  updatePlan, 
-  deletePlan,
-  exportData,
-  importData
-}) => {
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    status: 'planning' as Plan['status']
-  });
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }, []);
-
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (editingPlan) {
-        // 编辑现有计划
-        const updatedPlan: Plan = {
-          ...editingPlan,
-          ...formData,
-          updatedAt: new Date().toISOString()
-        };
-        await updatePlan(updatedPlan);
-        setEditingPlan(null);
-      } else {
-        // 创建新计划
-        await createPlan({
-          title: formData.title,
-          description: formData.description,
-          status: formData.status,
-          startDate: formData.startDate,
-          endDate: formData.endDate
-        });
-      }
-
-      // 重置表单
-      setFormData({
-        title: '',
-        description: '',
-        startDate: '',
-        endDate: '',
-        status: 'planning'
-      });
-      setShowCreateForm(false);
-    } catch (error) {
-      console.error('操作失败:', error);
-      alert('操作失败，请重试');
-    }
-  }, [editingPlan, formData, createPlan, updatePlan]);
-
-  const handleEdit = useCallback((plan: Plan) => {
-    setEditingPlan(plan);
-    setFormData({
-      title: plan.title,
-      description: plan.description,
-      startDate: plan.startDate,
-      endDate: plan.endDate,
-      status: plan.status
-    });
-    setShowCreateForm(true);
-  }, []);
-
-  const handleDownloadGenericTemplate = () => {
-    const genericPlan = {
-      id: "请为每个计划提供一个唯一ID，或留空由系统自动生成",
-      title: "你的计划标题",
-      description: "你的计划描述",
-      status: "planning",
-      startDate: "YYYY-MM-DD",
-      endDate: "YYYY-MM-DD",
-      tasks: [
-        {
-          id: "请为每个任务提供一个唯一ID，或留空由系统自动生成",
-          title: "任务1标题",
-          description: "任务1描述",
-          status: "todo",
-          priority: "medium",
-          startDate: "YYYY-MM-DD",
-          dueDate: "YYYY-MM-DD"
-        }
-      ]
-    };
-
-    // 提示用户可以复制这个结构来创建多个计划
-    const fileContent = [
-      genericPlan
-    ];
-    
-    const jsonData = JSON.stringify(fileContent, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'plan_template.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDelete = useCallback(async (planId: string) => {
-    if (window.confirm('确定要删除这个计划吗？此操作无法撤销。')) {
-      try {
-        await deletePlan(planId);
-      } catch (error) {
-        console.error('删除计划失败:', error);
-        alert('删除计划失败，请重试');
-      }
-    }
-  }, [deletePlan]);
-
-  const handleCancel = useCallback(() => {
-    setShowCreateForm(false);
-    setEditingPlan(null);
-    setFormData({
-      title: '',
-      description: '',
-      startDate: '',
-      endDate: '',
-      status: 'planning'
-    });
-  }, []);
-
-  const handleExport = useCallback(async () => {
-    if (exportData) {
-      try {
-        await exportData();
-        // 添加成功提示
-        alert('导出成功！文件已保存到您的下载文件夹。');
-      } catch (error) {
-        console.error('导出失败:', error);
-        alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
-      }
-    }
-  }, [exportData]);
-
-  const handleImportClick = useCallback(() => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  }, []);
-
-  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && importData) {
-      try {
-        const jsonData = await file.text();
-        console.log('[PlanManager] File content read:', jsonData); // 打印文件内容
-        await importData(jsonData);
-        alert('计划导入成功！');
-      } catch (error) {
-        console.error('导入失败:', error);
-        alert(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
-      } finally {
-        // 重置 input，以便可以再次选择同一个文件
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      }
-    }
-  }, [importData]);
-
-  const getStatusColor = useCallback((status: Plan['status']) => {
-    switch (status) {
-      case 'planning': return 'status-planning';
-      case 'in-progress': return 'status-in-progress';
-      case 'completed': return 'status-completed';
-      case 'archived': return 'status-archived';
-      default: return 'status-planning';
-    }
-  }, []);
-
-  const getStatusText = useCallback((status: Plan['status']) => {
-    switch (status) {
-      case 'planning': return '规划中';
-      case 'in-progress': return '进行中';
-      case 'completed': return '已完成';
-      case 'archived': return '已归档';
-      default: return '未知';
-    }
-  }, []);
-
-  // 缓存排序后的计划列表
-  const sortedPlans = useMemo(() => {
-    return [...plans].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [plans]);
-
-  return (
-    <div className="plan-manager">
-      <div className="page-header">
-        <h2 className="page-title">计划管理</h2>
-        <p className="page-description">创建、编辑和管理您的所有计划。</p>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">我的计划</h3>
-          <div className="card-actions">
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowCreateForm(true)}
-            >
-              ➕ 创建新计划
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={handleDownloadGenericTemplate}
-              title="下载一个空的JSON模板文件，用于编辑后批量导入"
-            >
-              📄 下载通用模板
-            </button>
-            
-            <div className="import-export-actions">
-              {importData && (
-                <>
-                  <button 
-                    className="btn btn-secondary"
-                    onClick={handleImportClick}
-                    title="导入计划"
-                  >
-                    📥 导入
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                  />
-                </>
-              )}
-              
-              {exportData && plans.length > 0 && (
-                <button 
-                  className="btn btn-secondary"
-                  onClick={handleExport}
-                  title="导出计划"
-                >
-                  📤 导出
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {showCreateForm && (
-          <PlanForm
-            editingPlan={editingPlan}
-            formData={formData}
-            onInputChange={handleInputChange}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        )}
-
-        {plans.length === 0 && !showCreateForm && (
-          <div className="empty-state">
-            <p>还没有任何计划。点击上方按钮创建您的第一个计划！</p>
-          </div>
-        )}
-
-        {plans.length > 0 && (
-          <div className="plan-list-container">
-            {sortedPlans.map(plan => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onSelect={onPlanSelect}
-                getStatusColor={getStatusColor}
-                getStatusText={getStatusText}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
-
-// 将表单提取为单独的组件
-const PlanForm = memo(({ 
-  editingPlan, 
-  formData, 
-  onInputChange, 
-  onSubmit, 
-  onCancel 
-}: {
+interface PlanFormProps {
   editingPlan: Plan | null;
-  formData: any;
+  formData: {
+    title: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    status: Plan['status'];
+  };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
+}
+
+const PlanForm: FC<PlanFormProps> = memo(({
+  editingPlan,
+  formData,
+  onInputChange,
+  onSubmit,
+  onCancel
 }) => (
-  <div className="create-form">
-    <h4>{editingPlan ? '编辑计划' : '创建新计划'}</h4>
-    <form onSubmit={onSubmit}>
+  <div className="plan-form-container">
+    <form onSubmit={onSubmit} className="plan-form">
+      <h2>{editingPlan ? '编辑计划' : '创建新计划'}</h2>
       <div className="form-group">
         <label htmlFor="title">计划标题 *</label>
         <input
@@ -408,21 +131,22 @@ const PlanForm = memo(({
   </div>
 ));
 
-// 将计划卡片提取为单独的组件
-const PlanCard = memo(({ 
-  plan, 
-  onEdit, 
-  onDelete, 
-  onSelect, 
-  getStatusColor, 
-  getStatusText 
-}: {
+interface PlanCardProps {
   plan: Plan;
   onEdit: (plan: Plan) => void;
   onDelete: (planId: string) => void;
   onSelect: (plan: Plan) => void;
   getStatusColor: (status: Plan['status']) => string;
   getStatusText: (status: Plan['status']) => string;
+}
+
+const PlanCard: FC<PlanCardProps> = memo(({ 
+  plan, 
+  onEdit, 
+  onDelete, 
+  onSelect, 
+  getStatusColor, 
+  getStatusText 
 }) => {
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -477,8 +201,292 @@ const PlanCard = memo(({
   );
 });
 
+const PlanManager: FC<PlanManagerProps> = memo(({ 
+  plans, 
+  onPlanSelect, 
+  createPlan, 
+  updatePlan, 
+  deletePlan,
+  exportData,
+  importData
+}) => {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    status: 'planning' as Plan['status']
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (editingPlan) {
+        const updatedPlan: Plan = {
+          ...editingPlan,
+          ...formData,
+          updatedAt: new Date().toISOString()
+        };
+        await updatePlan(updatedPlan);
+        setEditingPlan(null);
+      } else {
+        await createPlan({
+          title: formData.title,
+          description: formData.description,
+          status: formData.status,
+          startDate: formData.startDate,
+          endDate: formData.endDate
+        });
+      }
+
+      setFormData({
+        title: '',
+        description: '',
+        startDate: '',
+        endDate: '',
+        status: 'planning'
+      });
+      setShowCreateForm(false);
+    } catch (error) {
+      console.error('操作失败:', error);
+      alert('操作失败，请重试');
+    }
+  }, [editingPlan, formData, createPlan, updatePlan]);
+
+  const handleEdit = useCallback((plan: Plan) => {
+    setEditingPlan(plan);
+    setFormData({
+      title: plan.title,
+      description: plan.description,
+      startDate: plan.startDate,
+      endDate: plan.endDate,
+      status: plan.status
+    });
+    setShowCreateForm(true);
+  }, []);
+
+  const handleDownloadGenericTemplate = () => {
+    const genericPlan = {
+      id: "请为每个计划提供一个唯一ID，或留空由系统自动生成",
+      title: "你的计划标题",
+      description: "你的计划描述",
+      status: "planning",
+      startDate: "YYYY-MM-DD",
+      endDate: "YYYY-MM-DD",
+      tasks: [
+        {
+          id: "请为每个任务提供一个唯一ID，或留空由系统自动生成",
+          title: "任务1标题",
+          description: "任务1描述",
+          status: "todo",
+          priority: "medium",
+          startDate: "YYYY-MM-DD",
+          dueDate: "YYYY-MM-DD"
+        }
+      ]
+    };
+
+    const fileContent = [genericPlan];
+    
+    const jsonData = JSON.stringify(fileContent, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'plan_template.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDelete = useCallback(async (planId: string) => {
+    if (window.confirm('确定要删除这个计划吗？此操作无法撤销。')) {
+      try {
+        await deletePlan(planId);
+      } catch (error) {
+        console.error('删除计划失败:', error);
+        alert('删除计划失败，请重试');
+      }
+    }
+  }, [deletePlan]);
+
+  const handleCancel = useCallback(() => {
+    setShowCreateForm(false);
+    setEditingPlan(null);
+    setFormData({
+      title: '',
+      description: '',
+      startDate: '',
+      endDate: '',
+      status: 'planning'
+    });
+  }, []);
+
+  const handleExport = useCallback(async () => {
+    if (exportData) {
+      try {
+        await exportData();
+        alert('导出成功！文件已保存到您的下载文件夹。');
+      } catch (error) {
+        console.error('导出失败:', error);
+        alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      }
+    }
+  }, [exportData]);
+
+  const handleImportClick = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && importData) {
+      try {
+        const jsonData = await file.text();
+        console.log('[PlanManager] File content read:', jsonData);
+        await importData(jsonData);
+        alert('计划导入成功！');
+      } catch (error) {
+        console.error('导入失败:', error);
+        alert(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    }
+  }, [importData]);
+
+  const getStatusColor = useCallback((status: Plan['status']) => {
+    switch (status) {
+      case 'planning': return 'status-planning';
+      case 'in-progress': return 'status-in-progress';
+      case 'completed': return 'status-completed';
+      case 'archived': return 'status-archived';
+      default: return 'status-planning';
+    }
+  }, []);
+
+  const getStatusText = useCallback((status: Plan['status']) => {
+    switch (status) {
+      case 'planning': return '规划中';
+      case 'in-progress': return '进行中';
+      case 'completed': return '已完成';
+      case 'archived': return '已归档';
+      default: return '未知';
+    }
+  }, []);
+
+  const sortedPlans = useMemo(() => {
+    return [...plans].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [plans]);
+
+  return (
+    <div className="plan-manager">
+      <div className="plan-manager-header">
+        <div className="plan-manager-title">
+          <h2>计划管理</h2>
+          <button 
+            className="btn btn-primary"
+            onClick={() => { setShowCreateForm(true); setEditingPlan(null); }}
+            disabled={showCreateForm}
+          >
+            + 创建新计划
+          </button>
+        </div>
+        <div className="plan-manager-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={handleDownloadGenericTemplate}
+            title="下载一个空的JSON模板文件，用于编辑后批量导入"
+          >
+            📄 下载通用模板
+          </button>
+          
+          <div className="import-export-actions">
+            {importData && (
+              <>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleImportClick}
+                  title="导入计划"
+                >
+                  📥 导入
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+              </>
+            )}
+            
+            {exportData && plans.length > 0 && (
+              <button 
+                className="btn btn-secondary"
+                onClick={handleExport}
+                title="导出计划"
+              >
+                📤 导出
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showCreateForm && (
+        <PlanForm
+          editingPlan={editingPlan}
+          formData={formData}
+          onInputChange={handleInputChange}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      )}
+
+      {plans.length === 0 && !showCreateForm && (
+        <div className="empty-state">
+          <p>还没有任何计划。点击上方按钮创建您的第一个计划！</p>
+        </div>
+      )}
+
+      {plans.length > 0 && (
+        <div className="plan-list-container">
+          {sortedPlans.map(plan => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onSelect={onPlanSelect}
+              getStatusColor={getStatusColor}
+              getStatusText={getStatusText}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
 PlanManager.displayName = 'PlanManager';
 PlanForm.displayName = 'PlanForm';
 PlanCard.displayName = 'PlanCard';
 
-export default PlanManager; 
+export default PlanManager;
