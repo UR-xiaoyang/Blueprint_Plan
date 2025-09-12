@@ -1,19 +1,18 @@
 import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
 
-// Assuming 'Plan' is a global type or imported from another file.
-// If not, it should be defined here.
-// interface Plan {
-//   id: string;
-//   title: string;
-//   description: string;
-//   startDate: string;
-//   endDate: string;
-//   status: 'planning' | 'in-progress' | 'completed' | 'archived';
-//   progress: number;
-//   tasks: any[]; // Define task type properly
-//   createdAt: string;
-//   updatedAt: string;
-// }
+// Plan interface definition
+interface Plan {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  status: 'planning' | 'in-progress' | 'completed' | 'archived';
+  progress: number;
+  tasks: any[]; // Define task type properly
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface PlanManagerProps {
   plans: Plan[];
