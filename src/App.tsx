@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo, memo, useEffect } from 'react';
-import "./App.css";
+import "./styles/variables.css";
+import "./styles/layout.css";
+import "./styles/components.css";
+import "./styles/sidebar.css";
+import "./styles/responsive.css";
+import "./styles/animations.css";
 import Dashboard from "./components/Dashboard";
 import PlanManager from "./components/PlanManager";
 import TaskManager from "./components/TaskManager";
@@ -70,11 +75,6 @@ const App: React.FC = memo(() => {
     const checkIfMobile = () => {
       const isMobileView = window.innerWidth <= 768;
       setIsMobile(isMobileView);
-      
-      // 在移动设备上自动折叠侧边栏
-      if (isMobileView && !isSidebarCollapsed) {
-        setSidebarCollapsed(true);
-      }
     };
     
     // 初始检查
@@ -87,7 +87,7 @@ const App: React.FC = memo(() => {
     return () => {
       window.removeEventListener('resize', checkIfMobile);
     };
-  }, [isSidebarCollapsed]);
+  }, []);
 
   const selectedPlan = useMemo(
     () => plans.find(plan => plan.id === selectedPlanId) ?? null,

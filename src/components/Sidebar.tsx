@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback } from 'react';
 
 type ViewType = 'dashboard' | 'plans' | 'tasks' | 'analytics' | 'settings';
 
@@ -9,99 +9,64 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange, isCollapsed, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange, isCollapsed, onToggle }) => {
   const handleViewChange = useCallback((view: ViewType) => {
     return () => onViewChange(view);
   }, [onViewChange]);
 
-  // 添加移动设备检测
-  const [isMobile, setIsMobile] = useState(false);
-
-  // 检测屏幕宽度变化
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    // 初始检查
-    checkIfMobile();
-    
-    // 监听窗口大小变化
-    window.addEventListener('resize', checkIfMobile);
-    
-    // 清理监听器
-    return () => {
-      window.removeEventListener('resize', checkIfMobile);
-    };
-  }, []);
-
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <nav>
-        <ul className="sidebar-nav">
-          <li>
-            <button
-              className={currentView === 'dashboard' ? 'active' : ''}
-              onClick={handleViewChange('dashboard')}
-              title="仪表盘"
-            >
-              <span className="icon">📊</span>
-              <span className="text">仪表盘</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={currentView === 'plans' ? 'active' : ''}
-              onClick={handleViewChange('plans')}
-              title="计划管理"
-            >
-              <span className="icon">📋</span>
-              <span className="text">计划管理</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={currentView === 'tasks' ? 'active' : ''}
-              onClick={handleViewChange('tasks')}
-              title="任务管理"
-            >
-              <span className="icon">✅</span>
-              <span className="text">任务管理</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={currentView === 'analytics' ? 'active' : ''}
-              onClick={handleViewChange('analytics')}
-              title="数据分析"
-            >
-              <span className="icon">📈</span>
-              <span className="text">数据分析</span>
-            </button>
-          </li>
-          <li>
-            <button
-              className={currentView === 'settings' ? 'active' : ''}
-              onClick={handleViewChange('settings')}
-              title="设置"
-            >
-              <span className="icon">⚙️</span>
-              <span className="text">设置</span>
-            </button>
-          </li>
-        </ul>
+      <div className="sidebar-header">
+        <h2 className="sidebar-title">Blueprint Plan</h2>
+        <button className="sidebar-toggle" onClick={onToggle} title={isCollapsed ? '展开' : '收起'}>
+          {isCollapsed ? '→' : '←'}
+        </button>
+      </div>
+      
+      <nav className="sidebar-nav">
+        <button
+          className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
+          onClick={handleViewChange('dashboard')}
+          data-tooltip="仪表盘"
+        >
+          <span className="nav-icon">📊</span>
+          <span className="nav-text">仪表盘</span>
+        </button>
+        <button
+          className={`nav-item ${currentView === 'plans' ? 'active' : ''}`}
+          onClick={handleViewChange('plans')}
+          data-tooltip="计划管理"
+        >
+          <span className="nav-icon">📋</span>
+          <span className="nav-text">计划管理</span>
+        </button>
+        <button
+          className={`nav-item ${currentView === 'tasks' ? 'active' : ''}`}
+          onClick={handleViewChange('tasks')}
+          data-tooltip="任务管理"
+        >
+          <span className="nav-icon">✅</span>
+          <span className="nav-text">任务管理</span>
+        </button>
+        <button
+          className={`nav-item ${currentView === 'analytics' ? 'active' : ''}`}
+          onClick={handleViewChange('analytics')}
+          data-tooltip="数据分析"
+        >
+          <span className="nav-icon">📈</span>
+          <span className="nav-text">数据分析</span>
+        </button>
+        <button
+          className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
+          onClick={handleViewChange('settings')}
+          data-tooltip="设置"
+        >
+          <span className="nav-icon">⚙️</span>
+          <span className="nav-text">设置</span>
+        </button>
       </nav>
 
 
-
-      {/* 在非移动设备上显示折叠按钮 */}
-      {!isMobile && (
-        <div className="sidebar-footer">
-          <button className="toggle-button" onClick={onToggle} title={isCollapsed ? '展开' : '收起'}>
-            <span className="icon">{isCollapsed ? '→' : '←'}</span>
-          </button>
-        </div>
-      )}
     </aside>
   );
 });

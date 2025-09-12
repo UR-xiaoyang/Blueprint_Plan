@@ -1,0 +1,777 @@
+/* Component Styles */
+
+/* Basic Form Elements */
+input,
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: #0f0f0f;
+  background-color: #ffffff;
+  transition: border-color 0.25s;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #396cd8;
+}
+
+button:active {
+  border-color: #396cd8;
+  background-color: #e8e8e8;
+}
+
+input,
+button {
+  outline: none;
+}
+
+#greet-input {
+  margin-right: 5px;
+}
+
+/* Button Styles */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transform: translateZ(0);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-out, transform 0.15s ease-out;
+  transform: translateZ(0);
+}
+
+.btn-icon:hover {
+  background-color: var(--background-color);
+  transform: scale(1.1);
+}
+
+.btn-icon:active {
+  transform: scale(0.95);
+}
+
+/* Card Styles */
+.card {
+  background-color: var(--surface-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+  transform: translateZ(0);
+  transition: box-shadow 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Plan and Task Cards */
+.plan-card,
+.task-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: box-shadow 0.15s ease-out, border-color 0.15s ease-out, transform 0.15s ease-out;
+  transform: translateZ(0);
+}
+
+.plan-card:hover,
+.task-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.task-card.status-completed .task-card-title,
+.task-card.status-completed .task-card-description {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.plan-card-header,
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.plan-card-title,
+.task-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.plan-card-actions,
+.task-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.plan-card-description,
+.task-card-description {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.plan-card-meta,
+.task-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.plan-card-progress {
+  margin-bottom: 1rem;
+}
+
+.plan-card-footer,
+.task-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Plan Item Styles */
+.plan-item {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.plan-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.plan-item.status-completed {
+  background-color: var(--completed-background);
+}
+
+.plan-item.status-in-progress {
+  background-color: var(--in-progress-background);
+  border-left: 4px solid var(--warning-color);
+}
+
+.plan-info {
+  flex: 1;
+}
+
+.plan-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.plan-description {
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.plan-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.plan-date {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.plan-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 150px;
+}
+
+.plan-progress .progress-bar {
+  width: 100px;
+  margin: 0;
+}
+
+.plan-progress .progress-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plan Card Item Styles */
+.plan-card-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--surface-color);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.plan-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  border-color: var(--primary-color);
+}
+
+.plan-card-item.status-completed {
+  background-color: var(--completed-background);
+  opacity: 0.8;
+}
+
+.plan-card-item.status-in-progress {
+  background-color: var(--in-progress-background);
+  border-left: 4px solid var(--warning-color);
+}
+
+.plan-card-item.status-completed .plan-card-title {
+  text-decoration: line-through;
+}
+
+.plan-card-main {
+  flex-grow: 1;
+  margin-right: 1rem;
+}
+
+.plan-card-aside {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.plan-card-progress {
+  margin-top: 0.75rem;
+}
+
+/* Task Card Specific Styles */
+.task-card {
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  gap: 1rem;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.task-card.status-completed {
+  opacity: 0.7;
+  text-decoration: line-through;
+  background-color: #f9f9f9;
+}
+
+.task-card-main {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.task-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.task-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.task-card-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.task-card-aside {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.task-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Status Bar */
+.task-status-bar {
+  width: 5px;
+  align-self: stretch;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.task-status-bar.status-in-progress {
+  background-color: var(--primary-color);
+}
+
+.task-status-bar.status-todo {
+  background-color: var(--warning-color);
+}
+
+.task-status-bar.status-completed {
+  background-color: var(--success-color);
+}
+
+/* Task Dates */
+.task-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  transform: translateZ(0);
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--success-color);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+.progress-circle {
+  position: relative;
+  width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.progress-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-planning {
+  background-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.status-in-progress {
+  background-color: var(--status-in-progress-badge-bg);
+  color: var(--status-in-progress-badge-text);
+}
+
+.status-completed {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.status-archived {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+/* Priority Badges */
+.priority-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.priority-high {
+  background: linear-gradient(-45deg, #f97316, #f59e0b, #facc15, #fbbf24);
+  background-size: 400% 400%;
+  animation: animated-gradient 10s ease infinite;
+  color: white;
+}
+
+.priority-medium {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.priority-low {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+/* Metric Items */
+.metric-item {
+  text-align: center;
+  padding: 1rem 0;
+  transition: transform 0.15s ease-out;
+}
+
+.metric-item:hover {
+  transform: scale(1.02);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Quick Stats */
+.quick-stats p {
+  margin-bottom: 0.5rem;
+}
+
+/* Form Styles */
+.create-form {
+  background-color: var(--background-color);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  animation: slideDown 0.2s ease-out;
+}
+
+.create-form h4 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+  transform: translateZ(0);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.status-select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: var(--surface-color);
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.empty-state p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+/* Import Export */
+.import-export-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+}
+
+.import-export-section h4 {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.import-export-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.import-export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.file-input-wrapper input[type=file] {
+  position: absolute;
+  left: -9999px;
+}
+
+.file-input-label {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 0.9rem;
+  border: none;
+}
+
+.file-input-label:hover {
+  background-color: #475569;
+}
+
+/* Loading and Error States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-container p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  max-width: 500px;
+}
+
+.error-message h3 {
+  color: #dc2626;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.error-message p {
+  color: #7f1d1d;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.error-message .btn {
+  margin-top: 0.5rem;
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.notification.success {
+  background-color: #10b981;
+  color: white;
+}
+
+.notification.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.notification.info {
+  background-color: var(--primary-color);
+  color: white;
+}

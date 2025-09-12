@@ -1,0 +1,393 @@
+/* 响应式设计 */
+
+/* 平板设备 */
+@media (max-width: 1024px) {
+  .app {
+    grid-template-columns: auto 1fr;
+  }
+  
+  .sidebar {
+    width: 240px;
+  }
+  
+  .sidebar.collapsed {
+    width: 50px;
+  }
+  
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .plan-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+/* 桌面端视图 */
+@media (min-width: 769px) {
+  .app.sidebar-collapsed .sidebar {
+    width: var(--sidebar-width-collapsed);
+    transform: translateX(0);
+  }
+
+  .app.sidebar-collapsed .main-content {
+    margin-left: var(--sidebar-width-collapsed);
+  }
+}
+
+/* 移动端设备 */
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .app-content {
+    margin-left: 0;
+    padding: 1rem;
+    flex: 1;
+    width: 100%;
+  }
+  
+  .app-header {
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .header-title {
+    font-size: 1.25rem;
+  }
+  
+  .header-actions {
+    gap: 0.5rem;
+  }
+  
+  .metric-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .metric-card {
+    padding: 1rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .plan-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .plan-card,
+  .task-card {
+    margin: 0;
+  }
+  
+  .create-form {
+    padding: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .progress-circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+  
+  .task-list {
+    padding: 0.75rem;
+  }
+  
+  .task-item {
+    padding: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .task-content {
+    width: 100%;
+  }
+  
+  .task-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .settings-section {
+    padding: 1rem;
+  }
+  
+  .import-export-section {
+    padding: 1rem;
+  }
+  
+  .import-export-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+  }
+  
+  .mobile-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* 小屏幕移动设备 */
+@media (max-width: 480px) {
+  .app-content {
+    padding: 0.75rem;
+    flex: 1;
+    width: 100%;
+  }
+  
+  .app-header {
+    padding: 0.75rem;
+  }
+  
+  .header-title {
+    font-size: 1.125rem;
+  }
+  
+  .metric-card {
+    padding: 0.75rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .plan-card,
+  .task-card {
+    padding: 0.75rem;
+  }
+  
+  .card-title {
+    font-size: 1rem;
+  }
+  
+  .create-form {
+    padding: 0.75rem;
+  }
+  
+  .form-group label {
+    font-size: 0.875rem;
+  }
+  
+  .form-control {
+    padding: 0.625rem;
+    font-size: 0.875rem;
+  }
+  
+  .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .sidebar {
+    width: 100vw;
+  }
+  
+  .sidebar-header {
+    padding: 1rem;
+  }
+  
+  .nav-item {
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .task-item {
+    padding: 0.625rem;
+  }
+  
+  .task-title {
+    font-size: 0.875rem;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+
+
+/* 打印样式 */
+@media print {
+  .sidebar,
+  .header-actions,
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+  
+  .app {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .app-content {
+    margin: 0 !important;
+    padding: 1rem !important;
+  }
+  
+  .plan-card,
+  .task-card,
+  .metric-card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  .chart-container {
+    height: 300px !important;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --border-color: #666666;
+  }
+  
+  .card,
+  .sidebar,
+  .form-control {
+    border: 2px solid var(--border-color) !important;
+  }
+  
+  .btn {
+    border: 2px solid currentColor !important;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 暗色模式偏好 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #808080;
+    --border-color: #333333;
+  }
+}
+
+/* 横屏模式 */
+@media (orientation: landscape) and (max-height: 600px) {
+  .sidebar {
+    width: 200px;
+  }
+  
+  .sidebar.collapsed {
+    width: 50px;
+  }
+  
+  .app-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .metric-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .nav-item,
+  .task-item,
+  .sidebar-toggle {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .form-control {
+    min-height: 44px;
+    padding: 0.75rem;
+  }
+  
+  .nav-item:hover {
+    transform: none;
+  }
+  
+  .btn:hover {
+    transform: none;
+  }
+}

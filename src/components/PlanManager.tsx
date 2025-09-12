@@ -399,6 +399,8 @@ const PlanManager: FC<PlanManagerProps> = memo(({
       <div className="plan-manager-header">
         <div className="plan-manager-title">
           <h2>计划管理</h2>
+        </div>
+        <div className="plan-manager-actions">
           <button 
             className="btn btn-primary"
             onClick={() => { setShowCreateForm(true); setEditingPlan(null); }}
@@ -406,8 +408,6 @@ const PlanManager: FC<PlanManagerProps> = memo(({
           >
             + 创建新计划
           </button>
-        </div>
-        <div className="plan-manager-actions">
           <button
             className="btn btn-secondary"
             onClick={handleDownloadGenericTemplate}
