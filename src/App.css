@@ -213,15 +213,7 @@ body {
   justify-content: center;
 }
 
-.sidebar.collapsed .stat-item {
-  flex-direction: column;
-  align-items: center;
-}
 
-.sidebar.collapsed .stat-label {
-  margin-right: 0;
-  margin-bottom: 0.25rem;
-}
 
 .clock-wrapper {
   display: flex;
@@ -329,40 +321,7 @@ body {
   font-weight: 600;
 }
 
-.sidebar-stats {
-  margin-top: 2rem;
-  padding: 0 1.5rem;
-}
 
-.sidebar-stats h3 {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.stat-item:last-child {
-  border-bottom: none;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.stat-value {
-  font-weight: 600;
-  color: var(--primary-color);
-}
 
 .page-header {
   margin-bottom: 2rem;
@@ -975,9 +934,7 @@ body {
     display: none;
   }
 
-  .sidebar-stats {
-    display: none;
-  }
+
 
   .sidebar-footer {
     display: none;
@@ -1974,10 +1931,7 @@ body {
     padding: 0.25rem 0.5rem;
 }
 
-.sidebar-stats {
-  border-top: 1px solid var(--border-color);
-  padding-top: 1rem;
-}
+
 
 /* 移动端特定样式 */
 .app.mobile .app-content {

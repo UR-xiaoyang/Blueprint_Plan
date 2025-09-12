@@ -111,17 +111,7 @@ const App: React.FC = memo(() => {
     setSidebarCollapsed(prev => !prev);
   }, []);
 
-  // 缓存计算结果，避免重复计算
-  const planStats = useMemo(() => {
-    return {
-      totalPlans: stats.totalPlans,
-      activePlans: stats.activePlans,
-      completedPlans: stats.completedPlans,
-      totalTasks: stats.totalTasks,
-      completedTasks: stats.completedTasks,
-      completionRate: stats.completionRate
-    };
-  }, [stats]);
+
 
   // 使用useCallback优化渲染函数
   const renderContent = () => {
@@ -199,7 +189,6 @@ const App: React.FC = memo(() => {
         <Sidebar 
           currentView={currentView}
           onViewChange={handleViewChange}
-          stats={planStats}
           isCollapsed={isSidebarCollapsed}
           onToggle={handleToggleSidebar}
         />
