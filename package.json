@@ -60,7 +60,7 @@
   },
   "main": "electron/main.cjs",
   "build": {
-    "publish": "never",
+    "publish": "onTagOrDraft",
     "appId": "com.yourcompany.blueprintplan",
     "productName": "Blueprint Plan",
     "asarUnpack": [

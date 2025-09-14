@@ -2,11 +2,11 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*.*.*'
 
 jobs:
-  build:
+  release:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -53,61 +53,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build application
-        run: npm run dist
-        env:
-          ELECTRON_BUILDER_7Z_ALLOW_UNSAFE_SYMLINKS: "true"
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.os }}-build
-          path: release/ 
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Install gh CLI
-        run: sudo apt-get install gh
-
-      - name: Get version
-        id: get_version
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
-      - name: Delete existing release if it exists
-        run: |
-          gh release delete v${{ steps.get_version.outputs.VERSION }} --yes || true
+      - name: Build and publish application
+        run: npm run dist -- --publish onTag
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      - name: Delete existing git tag if it exists
-        run: |
-          git tag -d v${{ steps.get_version.outputs.VERSION }} || true
-          git push origin --delete v${{ steps.get_version.outputs.VERSION }} || true
-
-      - name: Create Release
-        run: |
-          gh release create v${{ steps.get_version.outputs.VERSION }} --title "Release v${{ steps.get_version.outputs.VERSION }}" --generate-notes --draft
-          
-          find artifacts -type f \( \
-            -name "*.exe" -not -name "elevate.exe" -o \
-            -name "*.dmg" -o \
-            -name "*.pkg" -o \
-            -name "*.deb" -o \
-            -name "*.rpm" -o \
-            -name "*.AppImage" -o \
-            -name "*.tar.gz" -o \
-            -name "*.zip" \
-          \) -exec gh release upload v${{ steps.get_version.outputs.VERSION }} {} +
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }} 
