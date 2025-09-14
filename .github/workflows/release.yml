@@ -57,7 +57,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libopenjp2-tools rpm bsdtar
+          sudo apt-get install -y --no-install-recommends libopenjp2-tools rpm bsdtar fakeroot dpkg
 
       - name: Build and publish application
         run: npm run dist -- --publish onTag
