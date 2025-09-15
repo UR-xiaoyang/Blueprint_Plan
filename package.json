@@ -59,8 +59,14 @@
     "vite": "^6.0.3"
   },
   "main": "electron/main.cjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UR-xiaoyang/Blueprint_Plan.git"
+  },
   "build": {
-    "publish": "onTagOrDraft",
+    "publish": {
+      "provider": "github"
+    },
     "appId": "com.yourcompany.blueprintplan",
     "productName": "Blueprint Plan",
     "asarUnpack": [
