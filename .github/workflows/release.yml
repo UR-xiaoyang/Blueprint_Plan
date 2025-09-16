@@ -57,7 +57,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends rpm bsdtar fakeroot dpkg
+          sudo apt-get install -y --no-install-recommends rpm libarchive-tools fakeroot dpkg
 
       - name: Build and publish application
         run: npm run dist -- --publish onTag
