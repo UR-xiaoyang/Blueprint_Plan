@@ -11,7 +11,6 @@ import TaskManager from "./components/TaskManager";
 import Sidebar from "./components/Sidebar";
 import { NotificationContainer, useNotifications } from "./components/Notification";
 import { usePlanManager } from "./hooks/usePlanManager";
-import Analytics from './components/Analytics';
 import Settings from './components/Settings';
 import { useTheme } from './hooks/useTheme';
 
@@ -41,7 +40,7 @@ export interface Plan {
   updatedAt: string;
 }
 
-type ViewType = 'dashboard' | 'plans' | 'tasks' | 'analytics' | 'settings';
+type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings';
 
 const App: React.FC = memo(() => {
   useTheme(); // Initialize theme
@@ -164,8 +163,6 @@ const App: React.FC = memo(() => {
             deleteTask={deleteTask}
           />
         );
-      case 'analytics':
-        return <Analytics plans={plans} />;
       case 'settings':
         return <Settings />;
       default:

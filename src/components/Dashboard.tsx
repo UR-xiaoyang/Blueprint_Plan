@@ -8,7 +8,7 @@ import Clock from './Clock';
 interface DashboardProps {
   plans: Plan[];
   onPlanSelect: (plan: Plan) => void;
-  onNavigate: (view: 'dashboard' | 'plans' | 'tasks' | 'analytics' | 'settings') => void;
+  onNavigate: (view: 'dashboard' | 'plans' | 'tasks' | 'settings') => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavigate }) => {
@@ -227,4 +227,4 @@ const PlanItem = memo(({
 Dashboard.displayName = 'Dashboard';
 PlanItem.displayName = 'PlanItem';
 
-export default Dashboard; 
+export default Dashboard;

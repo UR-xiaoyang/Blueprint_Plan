@@ -1,6 +1,6 @@
 import React, { memo, useCallback } from 'react';
 
-type ViewType = 'dashboard' | 'plans' | 'tasks' | 'analytics' | 'settings';
+type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -47,14 +47,6 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
         >
           <span className="nav-icon">✅</span>
           <span className="nav-text">任务管理</span>
-        </button>
-        <button
-          className={`nav-item ${currentView === 'analytics' ? 'active' : ''}`}
-          onClick={handleViewChange('analytics')}
-          data-tooltip="数据分析"
-        >
-          <span className="nav-icon">📈</span>
-          <span className="nav-text">数据分析</span>
         </button>
         <button
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
