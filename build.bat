@@ -118,6 +118,49 @@ rem --- Subroutines ---
     )
     goto :eof
 
+:check_android_sdk
+    rem 检查 ANDROID_SDK_ROOT 和 ANDROID_HOME 是否已配置且有效
+    if defined ANDROID_SDK_ROOT (
+        if exist "%ANDROID_SDK_ROOT%\platform-tools\adb.exe" (
+            echo Android SDK 已检测到: %ANDROID_SDK_ROOT%
+            set "ANDROID_HOME=%ANDROID_SDK_ROOT%"
+            exit /b 0
+        )
+    )
+    if defined ANDROID_HOME (
+        if exist "%ANDROID_HOME%\platform-tools\adb.exe" (
+            echo Android SDK 已检测到: %ANDROID_HOME%
+            set "ANDROID_SDK_ROOT=%ANDROID_HOME%"
+            exit /b 0
+        )
+    )
+
+    rem 尝试常见安装路径（Windows）
+    for %%P in ("%LOCALAPPDATA%\Android\Sdk" "%USERPROFILE%\AppData\Local\Android\Sdk" "C:\Android\sdk") do (
+        if exist "%%~P\platform-tools\adb.exe" (
+            set "ANDROID_SDK_ROOT=%%~P"
+            set "ANDROID_HOME=%%~P"
+            echo Android SDK 已检测到: %%~P
+            exit /b 0
+        )
+    )
+
+    echo 未检测到有效的 Android SDK。
+    echo 请安装 Android Studio 或手动指定 SDK 路径（例如：C:\Users\%USERNAME%\AppData\Local\Android\Sdk）。
+    set /p "sdk_path=请输入 Android SDK 路径（留空跳过在设备上运行）： "
+    if defined sdk_path (
+        if exist "%sdk_path%\platform-tools\adb.exe" (
+            set "ANDROID_SDK_ROOT=%sdk_path%"
+            set "ANDROID_HOME=%sdk_path%"
+            echo 已设置 ANDROID_SDK_ROOT=%sdk_path%
+            exit /b 0
+        ) else (
+            echo 提供的路径无效：未找到 platform-tools\adb.exe
+            exit /b 1
+        )
+    ) else (
+        exit /b 1
+    )
 :build_mobile
     echo ===== Starting mobile app build =====
 
@@ -180,10 +223,17 @@ rem --- Subroutines ---
     choice /c yn /m "Run on a connected device? "
     rem errorlevel 1 is y, 2 is n
     if not errorlevel 2 (
-        echo Running app on device...
-        call npx cap run android
+        rem 先检查并配置 Android SDK，避免 native-run 的 ERR_SDK_NOT_FOUND
+        call :check_android_sdk
+        if %errorlevel% neq 0 (
+            echo 跳过在设备上运行：未找到或未正确配置 Android SDK。
+            echo 请安装/配置后再运行：npx cap run android
+        ) else (
+            echo Running app on device...
+            call npx cap run android
+        )
     )
 
     echo ===== Build complete =====
     pause
-    goto :eof 
+    goto :eof
