@@ -96,11 +96,7 @@ const App: React.FC = memo(() => {
 
   const handleViewChange = useCallback((view: ViewType) => {
     setCurrentView(view);
-    // 在移动设备上，切换视图后自动折叠侧边栏
-    if (isMobile) {
-      setSidebarCollapsed(true);
-    }
-  }, [isMobile]);
+  }, []);
 
   const handlePlanSelect = useCallback((plan: Plan) => {
     setSelectedPlanId(plan.id);
