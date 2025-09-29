@@ -10,14 +10,23 @@ interface ThemeSchedule {
 const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
 export const useTheme = () => {
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    return (localStorage.getItem('themeMode') as ThemeMode) || 'light';
-  });
-  
-  const [schedule, setSchedule] = useState<ThemeSchedule>(() => {
-    const savedSchedule = localStorage.getItem('themeSchedule');
-    return savedSchedule ? JSON.parse(savedSchedule) : { start: '22:00', end: '07:00' };
-  });
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const [schedule, setSchedule] = useState<ThemeSchedule>({ start: '22:00', end: '07:00' });
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (window.ipcRenderer) {
+        const settings = await window.ipcRenderer.invoke('getSettings');
+        if (settings.themeMode) {
+          setThemeMode(settings.themeMode);
+        }
+        if (settings.schedule) {
+          setSchedule(settings.schedule);
+        }
+      }
+    };
+    loadSettings();
+  }, []);
 
   const applyTheme = useCallback(() => {
     if (themeMode === 'auto') {
@@ -51,8 +60,13 @@ export const useTheme = () => {
   }, [themeMode, schedule]);
 
   useEffect(() => {
-    localStorage.setItem('themeMode', themeMode);
-    localStorage.setItem('themeSchedule', JSON.stringify(schedule));
+    const saveSettings = async () => {
+      if (window.ipcRenderer) {
+        const current = await window.ipcRenderer.invoke('getSettings');
+        await window.ipcRenderer.invoke('saveSettings', { ...current, themeMode, schedule });
+      }
+    };
+    saveSettings();
     applyTheme();
 
     if (themeMode === 'auto') {
@@ -62,4 +76,4 @@ export const useTheme = () => {
   }, [themeMode, schedule, applyTheme]);
 
   return { themeMode, setThemeMode, schedule, setSchedule };
-}; 
+};

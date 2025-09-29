@@ -55,6 +55,15 @@ function getPlansDir() {
   return plansDir;
 }
 
+function getSettingsPath() {
+  const userDataPath = app.getPath('userData');
+  const appDataDir = path.join(userDataPath, 'app_data');
+  if (!fs.existsSync(appDataDir)) {
+    fs.mkdirSync(appDataDir, { recursive: true });
+  }
+  return path.join(appDataDir, 'settings.json');
+}
+
 // Helper function to read a single plan from disk
 function getPlan(planId) {
   const plansDir = getPlansDir();
@@ -87,8 +96,32 @@ function calculatePlanProgress(plan) {
   return (completedTasks / plan.tasks.length) * 100.0;
 }
 
-// API functions (Electron main process will call these)
 const api = {
+  getSettings: () => {
+    const settingsPath = getSettingsPath();
+    try {
+      if (fs.existsSync(settingsPath)) {
+        const content = fs.readFileSync(settingsPath, 'utf8');
+        return JSON.parse(content);
+      }
+    } catch (error) {
+      console.error('Failed to read settings:', error);
+    }
+    return {};
+  },
+
+  saveSettings: (settings) => {
+    const settingsPath = getSettingsPath();
+    try {
+      const content = JSON.stringify(settings, null, 2);
+      fs.writeFileSync(settingsPath, content, 'utf8');
+      return true;
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      return false;
+    }
+  },
+
   getAllPlans: () => {
     const plansDir = getPlansDir();
     try {

@@ -7,9 +7,10 @@ interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   isCollapsed: boolean;
   onToggle: () => void;
+  isConnected: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange, isCollapsed, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange, isCollapsed, onToggle, isConnected }) => {
   const handleViewChange = useCallback((view: ViewType) => {
     return () => onViewChange(view);
   }, [onViewChange]);
@@ -58,7 +59,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
         </button>
       </nav>
 
-
+      <div className="sidebar-footer">
+        <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+          <span className="status-indicator"></span>
+          <span className="status-text">{isConnected ? '已连接' : '未连接'}</span>
+        </div>
+      </div>
     </aside>
   );
 });

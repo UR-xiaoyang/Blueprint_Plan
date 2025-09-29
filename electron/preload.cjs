@@ -14,7 +14,14 @@ const validInvokeChannels = [
   'exportData',
   'importData',
   'greet',
+  'getSettings', // Added for theme settings
+  'saveSettings', // Added for theme settings
   'yjs:get-initial-state',
+  'start-server',
+  'stop-server',
+  'is-process-running', // Added for health check
+  'toggle-dev-tools', // Added for debug mode
+  'get-server-port', // Added for getting server port
 ];
 
 const validSendChannels = ['yjs:update-from-renderer'];
@@ -51,4 +58,12 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
       throw new Error(`Invalid receive channel: ${channel}`);
     }
   },
+});
+
+contextBridge.exposeInMainWorld('electron', {
+  startServer: (scriptPath) => ipcRenderer.invoke('start-server', scriptPath),
+  stopServer: (pid) => ipcRenderer.invoke('stop-server', pid),
+  isProcessRunning: (pid) => ipcRenderer.invoke('is-process-running', pid), // Added for health check
+  toggleDevTools: (open) => ipcRenderer.invoke('toggle-dev-tools', open),
+  getServerPort: () => ipcRenderer.invoke('get-server-port'), // Added for getting server port
 });

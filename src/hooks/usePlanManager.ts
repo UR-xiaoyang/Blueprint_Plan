@@ -43,7 +43,7 @@ export interface UsePlanManagerReturn {
 }
 
 export const usePlanManager = (): UsePlanManagerReturn => {
-  const { ydoc, plans: yPlans, isConnected } = useYjs();
+  const { ydoc, plans: yPlans, awareness, isConnected } = useYjs();
   const [managedPlans, setManagedPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -571,4 +571,4 @@ export const usePlanManager = (): UsePlanManagerReturn => {
     getTasksByPlan,
     getOverdueTasks
   };
-}; 
+};

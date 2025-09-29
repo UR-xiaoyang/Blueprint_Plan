@@ -272,3 +272,27 @@
     transform: translateY(-50%) translateX(0);
   }
 }
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-color-secondary);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--color-gray-400);
+}
+
+.status-indicator.connected {
+    background-color: var(--color-green-500);
+}
+
+.status-indicator.disconnected {
+    background-color: var(--color-red-500);
+}

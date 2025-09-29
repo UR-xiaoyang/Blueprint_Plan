@@ -58,6 +58,7 @@ const App: React.FC = memo(() => {
     loading,
     error,
     stats,
+    isConnected,
     createPlan,
     updatePlan,
     deletePlan,
@@ -184,6 +185,7 @@ const App: React.FC = memo(() => {
           onViewChange={handleViewChange}
           isCollapsed={isSidebarCollapsed}
           onToggle={handleToggleSidebar}
+          isConnected={isConnected}
         />
         <main className="main-content">
           {renderContent()}

@@ -75,9 +75,10 @@ rem --- Subroutines ---
     goto :eof
 
 :start_web
-    echo Starting Web dev server...
-    echo Visit http://localhost:5173 in your browser
-    call npm run dev
+    echo Starting Web dev server and signaling server...
+    echo Visit http://localhost:8079 in your browser
+    call npm install -g concurrently
+    call concurrently "npm run dev" "npm run signaling"
     goto :eof
 
 :start_electron
