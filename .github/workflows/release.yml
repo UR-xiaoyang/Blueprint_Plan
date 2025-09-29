@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    # Enable manual triggers from the GitHub Actions UI
+    inputs: {}
 
 jobs:
   release:
