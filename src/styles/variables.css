@@ -1,8 +1,8 @@
 /* CSS Variables and Root Styles */
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   font-size: 16px;
-  line-height: 24px;
+  line-height: 1.6;
   font-weight: 400;
 
   color: #0f0f0f;
@@ -14,50 +14,214 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  --primary-color: #2563eb;
-  --primary-dark: #1d4ed8;
+  /* 现代化渐变色彩系统 */
+  --primary-color: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #a5b4fc;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --accent-color: #06b6d4;
+  --accent-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  
   --secondary-color: #64748b;
   --success-color: #10b981;
+  --success-light: #d1fae5;
   --warning-color: #f59e0b;
+  --warning-light: #fef3c7;
   --danger-color: #ef4444;
-  --background-color: #f8fafc;
+  --danger-light: #fee2e2;
+  
+  /* 背景和表面颜色 */
+  --background-color: #fafbfc;
+  --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --surface-color: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-hover: #f8fafc;
+  
+  /* 边框和分割线 */
   --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --divider-color: #e5e7eb;
+  
+  /* 文字颜色 */
   --text-primary: #1e293b;
   --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+  
+  /* 阴影系统 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* 布局变量 */
   --sidebar-width: 280px;
   --sidebar-width-collapsed: 60px;
   --header-height: 80px;
-  --completed-background: #f8f9fa;
+  --border-radius: 12px;
+  --border-radius-sm: 8px;
+  --border-radius-lg: 16px;
+  
+  /* 状态颜色 */
+  --completed-background: #f0fdf4;
+  --completed-border: #bbf7d0;
   --in-progress-background: #fffbeb;
+  --in-progress-border: #fed7aa;
   --status-in-progress-badge-bg: #fed7aa;
   --status-in-progress-badge-text: #8a3800;
 }
 
 :root.dark-mode {
-  --primary-color: #3b82f6;
-  --primary-dark: #2563eb;
+  /* 暗色模式渐变色彩系统 */
+  --primary-color: #818cf8;
+  --primary-dark: #6366f1;
+  --primary-light: #c7d2fe;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --accent-color: #22d3ee;
+  --accent-gradient: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%);
+  
   --secondary-color: #94a3b8;
-  --success-color: #22c55e;
-  --warning-color: #f59e0b;
-  --danger-color: #ef4444;
-  --background-color: #1e293b;
-  --surface-color: #334155;
+  --success-color: #34d399;
+  --success-light: #064e3b;
+  --warning-color: #fbbf24;
+  --warning-light: #451a03;
+  --danger-color: #f87171;
+  --danger-light: #7f1d1d;
+  
+  /* 暗色背景和表面 */
+  --background-color: #0f172a;
+  --background-gradient: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --surface-color: #1e293b;
+  --surface-elevated: #334155;
+  --surface-hover: #475569;
+  
+  /* 暗色边框和分割线 */
   --border-color: #475569;
+  --border-light: #334155;
+  --divider-color: #374151;
+  
+  /* 暗色文字 */
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
-  --completed-background: #3a4c62;
-  --in-progress-background: #4d421a;
+  --text-muted: #94a3b8;
+  --text-inverse: #1e293b;
+  
+  /* 暗色阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+  
+  /* 暗色状态颜色 */
+  --completed-background: #064e3b;
+  --completed-border: #059669;
+  --in-progress-background: #451a03;
+  --in-progress-border: #d97706;
   --status-in-progress-badge-bg: #8a3800;
   --status-in-progress-badge-text: #fed7aa;
+  
+  /* 字体排版系统 */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+  
+  --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+  
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
 }
 
-/* Global Reset */
+/* Global Reset and Typography */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
+/* 基础字体排版 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+h2 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+}
+
+h3 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+h4 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+h5 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+}
+
+h6 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
+p {
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+  margin-bottom: 1em;
+}
+
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }
+
+.font-light { font-weight: var(--font-weight-light); }
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

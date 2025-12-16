@@ -181,10 +181,10 @@ const PlanCard: FC<PlanCardProps> = memo(({
             <div 
               className="progress-fill" 
               style={{ transform: `scaleX(${plan.progress / 100})` }}
-              title={`${plan.progress}%`}
+              title={`${plan.progress.toFixed(1)}%`}
             ></div>
           </div>
-          <span className="progress-text">{plan.progress}%</span>
+          <span className="progress-text">{plan.progress.toFixed(1)}%</span>
         </div>
       </div>
       <div className="plan-card-aside">
@@ -397,9 +397,6 @@ const PlanManager: FC<PlanManagerProps> = memo(({
   return (
     <div className="plan-manager">
       <div className="plan-manager-header">
-        <div className="plan-manager-title">
-          <h2>计划管理</h2>
-        </div>
         <div className="plan-manager-actions">
           <button 
             className="btn btn-primary"

@@ -1,15 +1,18 @@
 const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
 const path = require('path');
-const { fork } = require('child_process');
-const kill = require('tree-kill');
+const fs = require('fs');
 
 // Set user data path before app is ready to avoid cache issues
 const userDataPath = path.join(app.getPath('appData'), 'Blueprint-Plan');
 app.setPath('userData', userDataPath);
+// Explicitly set a writable cache directory to avoid Windows cache permission issues
+const userCachePath = path.join(userDataPath, 'Cache');
+try { fs.mkdirSync(userCachePath, { recursive: true }); } catch (_) {}
+app.setPath('userCache', userCachePath);
+// Disable hardware acceleration to prevent GPU cache initialization errors on some systems
+app.disableHardwareAcceleration();
 
 const api = require('./backend.cjs');
-const p2p = require('./p2p-backend.cjs');
-const Y = require('yjs');
 
 let mainWindow; // Keep a reference to the main window
 
@@ -18,6 +21,8 @@ function createWindow() {
     width: 800,
     height: 600,
     title: '计划委员会',
+    frame: false, // 移除系统标题栏
+    backgroundColor: '#000000', // 防止加载时出现白屏
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -28,8 +33,12 @@ function createWindow() {
   mainWindow.setMenu(null);
 
   const loadDevServer = (url, retries = 5) => {
-    mainWindow.loadURL(url).catch(err => {
-      console.error(`Failed to load dev server at ${url}, retrying... (${retries} left)`);
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    mainWindow.loadURL(url).then(() => {
+      console.log('Dev server loaded successfully!');
+    }).catch(err => {
+      console.error(`Failed to load dev server at ${url}, retrying... (${retries} left). Error: ${err.message}`);
       if (retries > 0) {
         setTimeout(() => {
           loadDevServer(url, retries - 1);
@@ -47,26 +56,23 @@ function createWindow() {
   // Use app.isPackaged to determine if in development or production
   if (!app.isPackaged) {
     loadDevServer(devServerURL);
-    // Open the DevTools automatically in development mode.
-    mainWindow.webContents.openDevTools();
+    // 仅当设置中的调试模式开启时才打开 DevTools，统一由复选框控制
+    try {
+      const s = api.getSettings();
+      if (s && !!s.debugMode) {
+        // Wait for DOM to be ready before opening DevTools to avoid connection errors
+        mainWindow.webContents.once('dom-ready', () => {
+          mainWindow.webContents.openDevTools();
+        });
+      }
+    } catch (_) {}
   } else {
     mainWindow.loadFile(buildPath);
   }
 }
 
 app.whenReady().then(() => {
-  // Initialize P2P backend persistence
-  p2p.initialize(app.getPath('userData'));
-
   createWindow();
-
-  // Listen for updates on the backend Y.Doc and send them to the renderer.
-  p2p.ydoc.on('update', (update, origin) => {
-    // Avoid echoing updates that came from the renderer itself.
-    if (origin !== 'renderer' && mainWindow) {
-      mainWindow.webContents.send('yjs:update-from-main', new Uint8Array(update));
-    }
-  });
 
   // Register F12 to open DevTools
   globalShortcut.register('F12', () => {
@@ -119,99 +125,8 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('saveSettings', async (event, settings) => {
-    return api.saveSettings(settings);
-  });
-
-  // --- Yjs Sync IPC Handlers ---
-  ipcMain.handle('yjs:get-initial-state', async () => {
-    return Y.encodeStateAsUpdate(p2p.ydoc);
-  });
-
-  ipcMain.on('yjs:update-from-renderer', (event, update) => {
-    // When an update is received from the renderer, apply it to the main process's ydoc.
-    // Use 'renderer' as the origin to prevent echoing it back.
-    Y.applyUpdate(p2p.ydoc, new Uint8Array(update), 'renderer');
-  });
-
-  // --- Server Management IPC Handlers ---
-  const runningServers = new Map();
-  let serverPort = null; // Variable to store the server port
-
-  ipcMain.handle('start-server', (event, scriptPath) => {
-    return new Promise((resolve, reject) => {
-      // Generate a random port above 10000
-      serverPort = Math.floor(Math.random() * 10000) + 10000;
-
-      const serverProcess = fork(
-        path.resolve(process.cwd(), 'node_modules/y-webrtc/bin/server.js'),
-        ['--host', '127.0.0.1'],
-        {
-          stdio: ['ignore', 'pipe', 'pipe', 'ipc'], // Redirect stdout and stderr to pipes, and enable IPC
-          env: { ...process.env, PORT: serverPort.toString() },
-          silent: true // If true, stdin, stdout, and stderr of the child are piped to the parent
-        }
-      );
-    
-      serverProcess.stdout.on('data', (data) => {
-        console.log(`[Handshake Server]: ${data}`);
-      });
-    
-      serverProcess.stderr.on('data', (data) => {
-        console.error(`[Handshake Server ERROR]: ${data}`);
-      });
-    
-      serverProcess.on('exit', (code) => {
-        console.log(`Server process exited with code ${code}`);
-      });
-      serverProcess.on('error', (err) => {
-        console.error(`Failed to start server ${scriptPath}:`, err);
-        reject(err);
-      });
-
-      serverProcess.on('spawn', () => {
-        if (serverProcess.pid) {
-          runningServers.set(serverProcess.pid, serverProcess);
-          console.log(`Server started with PID: ${serverProcess.pid} on port ${serverPort}`);
-          resolve({ pid: serverProcess.pid, port: serverPort });
-        }
-      });
-    });
-  });
-
-  ipcMain.handle('stop-server', async (event, pid) => {
-    const serverProcess = runningServers.get(pid);
-    if (serverProcess) {
-      return new Promise((resolve, reject) => {
-        kill(pid, 'SIGKILL', (err) => {
-          if (err) {
-            console.error(`Failed to kill process tree for PID ${pid}:`, err);
-            reject(err);
-          } else {
-            console.log(`Process tree for PID ${pid} successfully killed.`);
-            runningServers.delete(pid);
-            serverPort = null; // Reset the port when the server is stopped
-            resolve(true);
-          }
-        });
-      });
-    } else {
-      console.warn(`Server with PID ${pid} not found.`);
-      return false;
-    }
-  });
-
-  // IPC handler to get the current server port
-  ipcMain.handle('get-server-port', () => {
-    return serverPort;
-  });
-
-  ipcMain.handle('is-process-running', (event, pid) => {
-    try {
-      process.kill(pid, 0);
-      return true;
-    } catch (err) {
-      return false;
-    }
+    const ok = api.saveSettings(settings);
+    return ok;
   });
 
   ipcMain.handle('toggle-dev-tools', (event, open) => {
@@ -223,14 +138,29 @@ app.whenReady().then(() => {
       }
     }
   });
-});
 
-app.on('will-quit', () => {
-  // Unregister all shortcuts.
-  globalShortcut.unregisterAll();
+  ipcMain.handle('get-app-version', async () => {
+    return { ok: true, version: app.getVersion() };
+  });
+
+  // Window control handlers
+  ipcMain.handle('window-minimize', () => {
+    mainWindow?.minimize();
+  });
+  ipcMain.handle('window-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+  ipcMain.handle('window-close', () => {
+    mainWindow?.close();
+  });
 });
 
 app.on('window-all-closed', () => {
+  console.log('Window all closed event triggered');
   if (process.platform !== 'darwin') {
     app.quit();
   }

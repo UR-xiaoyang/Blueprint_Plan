@@ -71,7 +71,10 @@ function getPlan(planId) {
   try {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(content);
+      const plan = JSON.parse(content);
+      if (!plan.tasks) plan.tasks = [];
+      if (plan.progress === undefined) plan.progress = calculatePlanProgress(plan);
+      return plan;
     }
   } catch (error) {
     console.error(`Failed to read plan ${planId}:`, error);
@@ -89,11 +92,12 @@ function savePlan(plan) {
 
 // Calculate plan progress
 function calculatePlanProgress(plan) {
-  if (plan.tasks.length === 0) {
+  if (!plan.tasks || plan.tasks.length === 0) {
     return 0.0;
   }
   const completedTasks = plan.tasks.filter(task => task.status === "completed").length;
-  return (completedTasks / plan.tasks.length) * 100.0;
+  const progress = (completedTasks / plan.tasks.length) * 100.0;
+  return parseFloat(progress.toFixed(1));
 }
 
 const api = {
@@ -129,7 +133,10 @@ const api = {
       const plans = planFiles.map(file => {
         const filePath = path.join(plansDir, file);
         const content = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(content);
+        const plan = JSON.parse(content);
+        if (!plan.tasks) plan.tasks = [];
+        if (plan.progress === undefined) plan.progress = calculatePlanProgress(plan);
+        return plan;
       });
       return plans;
     } catch (error) {
@@ -229,7 +236,7 @@ const api = {
       plan.progress = calculatePlanProgress(plan);
       plan.updatedAt = new Date().toISOString();
       savePlan(plan);
-      return task;
+      return plan;
     } else {
       throw new Error("Plan not found");
     }
@@ -245,7 +252,7 @@ const api = {
         plan.progress = calculatePlanProgress(plan);
         plan.updatedAt = new Date().toISOString();
         savePlan(plan);
-        return task;
+        return plan;
       } else {
         throw new Error("Task not found");
       }
@@ -261,6 +268,7 @@ const api = {
       plan.progress = calculatePlanProgress(plan);
       plan.updatedAt = new Date().toISOString();
       savePlan(plan);
+      return plan;
     } else {
       throw new Error("Plan not found");
     }
@@ -334,3 +342,4 @@ const api = {
 };
 
 module.exports = api;
+

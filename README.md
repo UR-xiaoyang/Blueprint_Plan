@@ -7,16 +7,14 @@ Blueprint Plan 是一个现代化的、跨平台的规划与协作应用程序�
 ## ✨ 主要功能
 
 *   **跨平台支持**: 可在 Web、桌面 (Windows, macOS, Linux) 和移动端 (Android, iOS) 上运行。
-*   **实时协作**: 基于 [Y.js](https://yjs.dev/) 构建，允许多个用户在不同设备上实时编辑和同步数据。
 *   **丰富的仪表盘**: 提供一个集中的仪表盘 (`Dashboard`) 来概览所有项目和任务。
 *   **计划与任务管理**: 强大的计划 (`PlanManager`) 和任务 (`TaskManager`) 管理功能。
 *   **数据可视化**: 内置的分析图表 (`Analytics`, `AdvancedCharts`)，帮助用户洞察数据。
-*   **离线支持**: 支持在离线状态下工作，并在重新连接后自动同步数据。
+*   **本地存储**: 数据安全地存储在本地，保护您的隐私。
 
 ## 🛠️ 技术栈
 
 *   **前端**: [React](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
-*   **实时协作**: [Y.js](https://yjs.dev/)
 *   **桌面端**: [Electron](https://www.electronjs.org/)
 *   **移动端**: [Capacitor](https://capacitorjs.com/)
 *   **UI/UX**: 自定义组件，CSS
@@ -91,4 +89,6 @@ npm run electron:dev
 
 ## 🤝 贡献
 
-欢迎对项目进行贡献！如果你有任何想法或发现了 Bug，请随时提交 Pull Request 或创建 Issue。
+欢迎任何形式的贡献！如果您发现了 bug 或有新的功能建议，请提交 Issue 或 Pull Request。
+
+## 📄 许可证

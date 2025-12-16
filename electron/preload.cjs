@@ -16,16 +16,16 @@ const validInvokeChannels = [
   'greet',
   'getSettings', // Added for theme settings
   'saveSettings', // Added for theme settings
-  'yjs:get-initial-state',
-  'start-server',
-  'stop-server',
   'is-process-running', // Added for health check
   'toggle-dev-tools', // Added for debug mode
-  'get-server-port', // Added for getting server port
+  'get-app-version',
+  'window-minimize',
+  'window-maximize',
+  'window-close',
 ];
 
-const validSendChannels = ['yjs:update-from-renderer'];
-const validReceiveChannels = ['yjs:update-from-main'];
+const validSendChannels = [];
+const validReceiveChannels = [];
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -61,9 +61,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 });
 
 contextBridge.exposeInMainWorld('electron', {
-  startServer: (scriptPath) => ipcRenderer.invoke('start-server', scriptPath),
-  stopServer: (pid) => ipcRenderer.invoke('stop-server', pid),
-  isProcessRunning: (pid) => ipcRenderer.invoke('is-process-running', pid), // Added for health check
   toggleDevTools: (open) => ipcRenderer.invoke('toggle-dev-tools', open),
-  getServerPort: () => ipcRenderer.invoke('get-server-port'), // Added for getting server port
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 });

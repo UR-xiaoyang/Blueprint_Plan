@@ -2,10 +2,12 @@
 
 interface Window {
   electron: {
-    startServer: (scriptPath: string) => Promise<{ pid: number; port: number }>;
-    stopServer: (pid: number) => Promise<boolean>;
-    isProcessRunning: (pid: number) => Promise<boolean>;
     toggleDevTools: (open: boolean) => Promise<void>;
-    getServerPort: () => Promise<number | null>;
+    getAppVersion: () => Promise<{ ok: boolean; version?: string; error?: string }>;
+  };
+  ipcRenderer: {
+    invoke(channel: string, ...args: any[]): Promise<any>;
+    send(channel: string, ...args: any[]): void;
+    on(channel: string, listener: (...args: any[]) => void): () => void;
   };
 }

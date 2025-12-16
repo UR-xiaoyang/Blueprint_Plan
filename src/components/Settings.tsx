@@ -1,37 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
-import { useOnlineMode } from '../hooks/useOnlineMode';
 import { useDebugMode } from '../hooks/useDebugMode';
 
 const Settings: React.FC = () => {
   const { themeMode, setThemeMode, schedule, setSchedule } = useTheme();
-  const { 
-    onlineMode, 
-    setOnlineMode, 
-    serverAddress, 
-    setServerAddress, 
-    localServerStatus,
-    startLocalServer, 
-    stopLocalServer 
-  } = useOnlineMode();
   const { debugMode, setDebugMode } = useDebugMode();
-  const [localServerAddress, setLocalServerAddress] = useState(serverAddress);
-  const [localServerPort, setLocalServerPort] = useState<number | null>(null);
-
-  const handleOnlineModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const mode = event.target.value as 'local' | 'cloud' | 'offline';
-    setOnlineMode(mode);
-    if (mode === 'local') {
-      startLocalServer();
-    }
-    // 持久化保存（合并已存在设置）
-    (async () => {
-      if (window.ipcRenderer) {
-        const current = await window.ipcRenderer.invoke('getSettings');
-        await window.ipcRenderer.invoke('saveSettings', { ...current, onlineMode: mode });
-      }
-    })();
-  };
+  const [realAppVersion, setRealAppVersion] = useState('');
+  const [showProgramInfo, setShowProgramInfo] = useState(false);
 
   const handleThemeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newTheme = event.target.value as 'light' | 'dark' | 'auto';
@@ -55,52 +30,11 @@ const Settings: React.FC = () => {
     })();
   };
 
-  const handleRestart = async () => {
-    await stopLocalServer();
-    // Add a delay to give the OS time to release the port
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
-    await startLocalServer();
-  };
-
-  const handleApplyServerAddress = () => {
-    setServerAddress(localServerAddress);
-    // 持久化保存（合并已存在设置）
-    (async () => {
-      if (window.ipcRenderer) {
-        const current = await window.ipcRenderer.invoke('getSettings');
-        await window.ipcRenderer.invoke('saveSettings', { ...current, serverAddress: localServerAddress });
-      }
-    })();
-  };
-
-  useEffect(() => {
-    setLocalServerAddress(serverAddress);
-  }, [serverAddress]);
-
-  useEffect(() => {
-    if (onlineMode === 'local' && localServerStatus === 'running') {
-      window.electron.getServerPort().then(port => {
-        if (port) {
-          setLocalServerPort(port);
-        }
-      });
-    } else {
-      setLocalServerPort(null);
-    }
-  }, [onlineMode, localServerStatus]);
-
-  // 初始化加载其他设置（在线模式、服务器地址、调试模式）
+  // 初始化加载其他设置（调试模式）
   useEffect(() => {
     (async () => {
       if (window.ipcRenderer) {
         const settings = await window.ipcRenderer.invoke('getSettings');
-        if (settings.onlineMode) {
-          setOnlineMode(settings.onlineMode);
-        }
-        if (settings.serverAddress) {
-          setServerAddress(settings.serverAddress);
-          setLocalServerAddress(settings.serverAddress);
-        }
         if (typeof settings.debugMode === 'boolean') {
           setDebugMode(settings.debugMode);
         }
@@ -108,9 +42,22 @@ const Settings: React.FC = () => {
     })();
   }, []);
 
+  // 自动获取程序版本
+  useEffect(() => {
+    (async () => {
+      try {
+        if (window.electron && typeof window.electron.getAppVersion === 'function') {
+          const r = await window.electron.getAppVersion();
+          if (r && r.ok && r.version) {
+            setRealAppVersion(String(r.version));
+          }
+        }
+      } catch (_) {}
+    })();
+  }, []);
+
   return (
     <div className="settings-view">
-      <h2>设置</h2>
       
       <div className="setting-section">
         <h3>夜间模式</h3>
@@ -175,90 +122,66 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="setting-section">
-        <h3>在线模式</h3>
-        <div className="setting-option">
-          <label>
+        <h3>其他设置</h3>
+        <div className="setting-item">
+          <label htmlFor="debug-mode">
             <input
-              type="radio"
-              name="onlineMode"
-              value="local"
-              checked={onlineMode === 'local'}
-              onChange={handleOnlineModeChange}
+              type="checkbox"
+              id="debug-mode"
+              checked={debugMode}
+              onChange={handleDebugModeChange}
             />
-            本地牵手服务器
-            {onlineMode === 'local' && (
-              <span className="server-status">
-                {localServerStatus === 'running' && localServerPort && (
-                  <span className="port-display">运行于端口: {localServerPort}</span>
-                )}
-                {localServerStatus === 'stopped' && (
-                  <button onClick={handleRestart} className="restart-button">
-                    重启
-                  </button>
-                )}
-              </span>
-            )}
-          </label>
-        </div>
-        <div className="setting-option">
-          <label>
-            <input
-              type="radio"
-              name="onlineMode"
-              value="cloud"
-              checked={onlineMode === 'cloud'}
-              onChange={handleOnlineModeChange}
-            />
-            在线
-          </label>
-          <label>
-            本地牵手服务器
-            {onlineMode === 'local' && (
-              <span className="server-status">
-                {localServerStatus === 'stopped' && (
-                  <button onClick={handleRestart} className="restart-button">
-                    重启
-                  </button>
-                )}
-              </span>
-            )}
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="offline"
-              checked={onlineMode === 'offline'}
-              onChange={handleOnlineModeChange}
-            />
-            离线
+            开启调试模式
           </label>
         </div>
       </div>
-      {onlineMode === 'cloud' && (
-        <div className="setting-item">
-          <label htmlFor="server-address">在线牵手服务器地址</label>
-          <div className="server-address-input-container">
-            <input
-              type="text"
-              id="server-address"
-              value={localServerAddress}
-              onChange={(e) => setLocalServerAddress(e.target.value)}
-              placeholder="例如: ws://your-server.com:4444"
-            />
-            <button onClick={handleApplyServerAddress}>应用</button>
+
+      <div className="setting-section">
+        <h3>程序信息</h3>
+        <button onClick={async () => {
+          try {
+            if (window.electron && typeof window.electron.getAppVersion === 'function') {
+              const r = await window.electron.getAppVersion();
+              if (r && r.ok && r.version) {
+                setRealAppVersion(String(r.version));
+              }
+            }
+          } catch (_) {}
+          setShowProgramInfo(true);
+        }}>查看程序信息</button>
+        {showProgramInfo && (
+          <div className="program-info-modal" style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}>
+            <div style={{
+              background: '#fff',
+              padding: '16px 20px',
+              borderRadius: 8,
+              width: 'min(520px, 90vw)',
+              boxShadow: '0 10px 24px rgba(0,0,0,0.2)'
+            }}>
+              <h4 style={{ marginTop: 0 }}>Blueprint Plan 程序信息</h4>
+              <div style={{ lineHeight: 1.8 }}>
+                <div><strong>程序名称：</strong>Blueprint Plan</div>
+                <div><strong>版本：</strong>{realAppVersion || '未知'}</div>
+                <div><strong>调试模式：</strong>{debugMode ? '开启' : '关闭'}</div>
+                <div><strong>运行环境：</strong>{navigator.userAgent}</div>
+              </div>
+              <div style={{ marginTop: 12, textAlign: 'right' }}>
+                <button onClick={() => setShowProgramInfo(false)}>关闭</button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      <div className="setting-item">
-        <label htmlFor="debug-mode">
-          <input
-            type="checkbox"
-            id="debug-mode"
-            checked={debugMode}
-            onChange={handleDebugModeChange}
-          />
-          开启调试模式
-        </label>
+        )}
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 /* 侧边栏样式 */
 .sidebar {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative; /* 修复: 移除 absolute 定位，使其在 flex 容器中正确流式布局 */
+  /* top: 0; */
+  /* left: 0; */
   width: 280px;
-  height: 100%;
+  height: 100%; /* 修复: 使用视口高度，确保撑满屏幕 */
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.1) 0%, 
     rgba(255, 255, 255, 0.05) 100%);
@@ -14,37 +14,28 @@
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
+  flex-shrink: 0; /* 修复: 防止侧边栏被压缩 */
 }
 
 .sidebar.collapsed {
   width: 60px;
+  overflow: hidden; /* 强制裁剪溢出内容，防止宽度被撑大 */
 }
 
-.sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+/* 移除 header 相关的样式 */
+/* .sidebar-header { ... } */
+
+.sidebar-footer {
+  padding: 1rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 80px;
+  justify-content: flex-end; /* 将按钮放在右边，或者居中 */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
-.sidebar.collapsed .sidebar-header {
-  padding: 1rem 0.75rem;
+.sidebar.collapsed .sidebar-footer {
   justify-content: center;
-}
-
-.sidebar-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  transition: opacity 0.3s ease;
-}
-
-.sidebar.collapsed .sidebar-title {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
+  padding: 1rem 0;
 }
 
 .sidebar-toggle {
@@ -58,6 +49,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px; /* 固定宽度，美观 */
+  height: 32px;
 }
 
 .sidebar-toggle:hover {
@@ -69,6 +62,7 @@
   flex: 1;
   padding: 1rem 0;
   overflow-y: auto;
+  overflow-x: hidden; /* 修复: 隐藏水平滚动条 */
 }
 
 .nav-item {
@@ -83,8 +77,8 @@
   background: none;
   width: 100%;
   text-align: left;
-  margin: 0.25rem 0.75rem;
-  border-radius: 12px;
+  margin: 0.25rem 0; /* 修改: 移除左右 margin，使其填满宽度 */
+  border-radius: 0; /* 修改: 移除圆角，改为直角 */
   position: relative;
   font-size: inherit;
   font-family: inherit;
@@ -92,7 +86,7 @@
 
 .sidebar.collapsed .nav-item {
   padding: 0.75rem;
-  margin: 0.25rem 0.5rem;
+  margin: 0.25rem 0;
   justify-content: center;
 }
 
@@ -112,7 +106,7 @@
 
 .sidebar.collapsed .nav-item.active {
   border-left: none;
-  border-radius: 12px;
+  border-radius: 0;
 }
 
 .nav-icon {
@@ -129,6 +123,7 @@
 .nav-text {
   transition: opacity 0.3s ease;
   font-weight: 500;
+  white-space: nowrap; /* 防止文字换行 */
 }
 
 .sidebar.collapsed .nav-text {
@@ -137,15 +132,7 @@
   overflow: hidden;
 }
 
-.sidebar-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.1);
-}
 
-.sidebar.collapsed .sidebar-footer {
-  padding: 1rem 0.75rem;
-}
 
 .user-info {
   display: flex;
@@ -224,7 +211,7 @@
   background: var(--primary-color);
   transform: scaleY(0);
   transition: transform 0.3s ease;
-  border-radius: 0 2px 2px 0;
+  border-radius: 0;
 }
 
 .nav-item:hover::before {

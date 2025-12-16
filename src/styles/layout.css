@@ -1,47 +1,157 @@
 /* Layout and Grid System */
 
+/* App Container adjustment for TitleBar */
 .app {
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative;
-  transform: translateZ(0);
+  height: 100vh;
   overflow: hidden;
+  
+  /* Safe Area Support for Edge-to-Edge Display */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-.app.sidebar-collapsed .main-content {
-  margin-left: 0;
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  /* Adjust for titlebar height if present, otherwise just fill */
+  height: 100%; 
 }
 
-.app.sidebar-collapsed .sidebar {
-  transform: translateX(-100%);
+/* Custom Title Bar Styles */
+.titlebar {
+  height: 32px;
+  background-color: var(--surface-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 9999;
+  border-bottom: 1px solid var(--border-color);
+  user-select: none;
+  flex-shrink: 0;
 }
+
+.titlebar-drag-region {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 1rem;
+  -webkit-app-region: drag;
+  gap: 8px;
+}
+
+.titlebar-drag-region.left {
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.titlebar-center-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  pointer-events: none; /* 让鼠标事件穿透到下方的 drag region */
+  -webkit-app-region: no-drag; /* 这里的文字本身不可拖动，但由于 pointer-events: none，实际会触发下层的 drag */
+}
+
+.titlebar-app-name {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.titlebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.titlebar-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-button {
+  width: 46px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  outline: none;
+}
+
+.titlebar-button:hover {
+  background-color: var(--surface-hover);
+}
+
+.titlebar-button.close:hover {
+  background-color: #c42b1c; /* Windows red */
+  color: white;
+}
+
+/* Dashboard Layout */
+
+/* Removed legacy sidebar-collapsed rules that conflicted with flex layout */
 
 .app-header {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
+  background: var(--background-gradient);
+  color: var(--text-inverse);
   height: var(--header-height);
   padding: 1rem 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   justify-content: center;
   z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.app-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-gradient);
+  opacity: 0.95;
+  z-index: -1;
 }
 
 .app-header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-header p {
-  opacity: 0.9;
-  font-size: 0.9rem;
+  opacity: 0.95;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .app-content {
@@ -58,7 +168,7 @@
   background-color: var(--background-color);
   transition: margin-left 0.3s ease, background-color 0.3s ease;
   min-height: 0;
-  margin-left: var(--sidebar-width);
+  /* margin-left: var(--sidebar-width); Removed for flex layout */
 }
 
 /* Container Styles */
@@ -76,7 +186,30 @@
   justify-content: center;
 }
 
-/* Grid System */
+/* Debug Mode UI Outlines */
+body.debug-mode * {
+  outline: 1px solid rgba(255, 0, 0, 0.2) !important;
+}
+
+body.debug-mode .sidebar {
+  outline: 2px solid blue !important;
+}
+
+body.debug-mode .sidebar-header {
+  outline: 2px solid green !important;
+}
+
+body.debug-mode .nav-item {
+  outline: 1px dashed yellow !important;
+}
+
+body.debug-mode .app-content {
+  outline: 2px dashed purple !important;
+}
+
+body.debug-mode .main-content {
+  outline: 2px dashed orange !important;
+}
 .grid {
   display: grid;
   gap: 1.5rem;

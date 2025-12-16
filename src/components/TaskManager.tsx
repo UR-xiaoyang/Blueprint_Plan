@@ -4,12 +4,13 @@ import { Plan, Task } from '../App';
 
 interface TaskManagerProps {
   selectedPlan: Plan | null;
-  createTask: (planId: string, task: Omit<Task, 'id' | 'planId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  createTask: (planId: string, task: Omit<Task, 'id' | 'planId' | 'createdAt' | 'updatedAt' | 'logs'>) => Promise<void>;
   updateTask: (task: Task) => Promise<void>;
   deleteTask: (planId: string, taskId: string) => Promise<void>;
+  addTaskLog: (taskId: string, content: string) => Promise<void>;
 }
 
-function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskManagerProps) {
+function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTaskLog }: TaskManagerProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
@@ -98,7 +99,7 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskM
   const handleStatusChange = useCallback(async (taskId: string, newStatus: Task['status']) => {
     if (!selectedPlan) return;
 
-    const taskToUpdate = selectedPlan.tasks.find(t => t.id === taskId);
+    const taskToUpdate = (selectedPlan.tasks || []).find(t => t.id === taskId);
     if (taskToUpdate) {
       try {
         const updatedTask: Task = { 
@@ -167,7 +168,7 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskM
   const taskStats = useMemo(() => {
     if (!selectedPlan) return { total: 0, completed: 0, inProgress: 0, todo: 0 };
     
-    const tasks = selectedPlan.tasks;
+    const tasks = selectedPlan.tasks || [];
     return {
       total: tasks.length,
       completed: tasks.filter(task => task.status === 'completed').length,
@@ -180,7 +181,7 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskM
   const sortedTasks = useMemo(() => {
     if (!selectedPlan) return [];
     
-    return [...selectedPlan.tasks].sort((a, b) => {
+    return [...(selectedPlan.tasks || [])].sort((a, b) => {
       // 按状态排序：待办 > 进行中 > 已完成
       const statusOrder = { 'todo': 0, 'in-progress': 1, 'completed': 2 };
       if (statusOrder[a.status] !== statusOrder[b.status]) {
@@ -198,14 +199,18 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskM
     });
   }, [selectedPlan]);
 
+  const handleAddLog = useCallback(async (taskId: string, content: string) => {
+    try {
+      await addTaskLog(taskId, content);
+    } catch (error) {
+      console.error('添加日志失败:', error);
+      alert('添加日志失败，请重试');
+    }
+  }, [addTaskLog]);
+
   if (!selectedPlan) {
     return (
       <div className="task-manager">
-        <div className="page-header">
-          <h2 className="page-title">任务管理</h2>
-          <p className="page-description">请先选择一个计划来管理任务。</p>
-        </div>
-        
         <div className="empty-state">
           <p>请从计划管理页面选择一个计划，然后回到这里管理任务。</p>
         </div>
@@ -215,11 +220,6 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskM
 
   return (
     <div className="task-manager">
-      <div className="page-header">
-        <h2 className="page-title">任务管理</h2>
-        <p className="page-description">管理 "{selectedPlan.title}" 计划的任务</p>
-      </div>
-
       {/* 任务统计 */}
       <div className="grid grid-4">
         <TaskStatCard 
@@ -279,6 +279,7 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask }: TaskM
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onStatusChange={handleStatusChange}
+                onAddLog={handleAddLog}
                 getPriorityColor={getPriorityColor}
                 getPriorityText={getPriorityText}
                 getStatusText={getStatusText}
@@ -420,6 +421,7 @@ const TaskCard = memo(({
   onEdit, 
   onDelete, 
   onStatusChange, 
+  onAddLog,
   getPriorityColor, 
   getPriorityText, 
   getStatusText,
@@ -429,16 +431,31 @@ const TaskCard = memo(({
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: Task['status']) => void;
+  onAddLog: (taskId: string, content: string) => void;
   getPriorityColor: (priority: Task['priority']) => string;
   getPriorityText: (priority: Task['priority']) => string;
   getStatusText: (status: Task['status']) => string;
   getStatusClass: (status: Task['status']) => string;
 }) => {
+  const [showLogInput, setShowLogInput] = useState(false);
+  const [logContent, setLogContent] = useState('');
+  const [showLogs, setShowLogs] = useState(false);
+
   const handleEdit = useCallback(() => onEdit(task), [onEdit, task]);
   const handleDelete = useCallback(() => onDelete(task.id), [onDelete, task.id]);
   const handleStatusChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     onStatusChange(task.id, e.target.value as Task['status']);
   }, [onStatusChange, task.id]);
+
+  const handleLogSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (logContent.trim()) {
+      onAddLog(task.id, logContent);
+      setLogContent('');
+      setShowLogInput(false);
+      setShowLogs(true); // Automatically show logs after adding
+    }
+  }, [logContent, onAddLog, task.id]);
 
   const formattedDates = useMemo(() => ({
     start: task.startDate ? new Date(task.startDate).toLocaleDateString('zh-CN') : '',
@@ -462,6 +479,56 @@ const TaskCard = memo(({
             {task.dueDate && <div>截止: {formattedDates.due}</div>}
           </div>
         )}
+        
+        {/* Task Logs Section */}
+        <div className="task-logs-section">
+          <div className="task-logs-header">
+            <button 
+              className="btn-text"
+              onClick={() => setShowLogs(!showLogs)}
+            >
+              {showLogs ? '▼ 收起日志' : `▶ 查看日志 (${task.logs?.length || 0})`}
+            </button>
+            <button 
+              className="btn-text"
+              onClick={() => setShowLogInput(!showLogInput)}
+            >
+              + 记一笔
+            </button>
+          </div>
+          
+          {showLogInput && (
+            <form onSubmit={handleLogSubmit} className="log-input-form">
+              <input
+                type="text"
+                value={logContent}
+                onChange={(e) => setLogContent(e.target.value)}
+                placeholder="输入日志内容..."
+                autoFocus
+                className="log-input"
+              />
+              <button type="submit" className="btn-small btn-primary">保存</button>
+            </form>
+          )}
+
+          {showLogs && task.logs && task.logs.length > 0 && (
+            <div className="task-logs-list">
+              {task.logs.slice().reverse().map(log => (
+                <div key={log.id} className="task-log-item">
+                  <span className="log-time">
+                    {new Date(log.timestamp).toLocaleString('zh-CN', { 
+                      month: '2-digit', 
+                      day: '2-digit', 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </span>
+                  <span className="log-content">{log.content}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="task-card-aside">
         <select 

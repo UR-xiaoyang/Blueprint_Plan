@@ -1,17 +1,75 @@
-/* 响应式设计 */
+/* 现代化响应式设计系统 */
 
-/* 平板设备 */
-@media (max-width: 1024px) {
-  .app {
-    grid-template-columns: auto 1fr;
+/* 断点定义 */
+:root {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* 超大屏幕 (2xl) */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
   }
   
+  .metric-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+  }
+}
+
+/* 大屏幕 (xl) */
+@media (min-width: 1280px) and (max-width: 1535px) {
+  .metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* 桌面端 (lg) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .sidebar {
+    width: 260px;
+  }
+  
+  .metric-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .plan-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* 平板设备 (md) */
+@media (min-width: 768px) and (max-width: 1023px) {
   .sidebar {
     width: 240px;
   }
   
   .sidebar.collapsed {
-    width: 50px;
+    width: 60px;
   }
   
   .metric-grid {
@@ -26,6 +84,11 @@
   
   .plan-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  
+  .main-content {
+    padding: 1.5rem;
   }
 }
 
@@ -41,30 +104,88 @@
   }
 }
 
-/* 移动端设备 */
-@media (max-width: 768px) {
+/* 小屏幕移动端 (sm) */
+@media (min-width: 640px) and (max-width: 767px) {
+  .main-content {
+    padding: 1rem;
+    margin-left: 0;
+  }
+  
+  .metric-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .plan-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .app-header {
+    padding: 0.75rem 1rem;
+    height: 60px;
+  }
+  
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* 移动端设备 (xs) */
+@media (max-width: 639px) {
   .app {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
+  }
+  
+  .main-content {
+    padding: 0.75rem;
+    margin-left: 0;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+  
+  .app-header {
+    padding: 0.5rem 1rem;
+    height: 56px;
+  }
+  
+  .app-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  
+  .app-header p {
+    font-size: 0.8rem;
   }
   
   .sidebar {
     position: fixed;
     bottom: 0;
     left: 0;
-    top: auto; /* 修复安卓端：覆盖默认的 top:0，避免侧边栏占满全屏并跑到顶部 */
+    top: auto;
     width: 100%;
-    height: calc(56px + env(safe-area-inset-bottom, 0px)); /* 固定底部栏高度 */
+    height: calc(70px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(30, 41, 59, 0.95);
     backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     transform: none;
     transition: none;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    box-shadow: 0 -8px 24px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-xl);
   }
 
   .sidebar.collapsed {
@@ -81,41 +202,52 @@
     flex-direction: row;
     justify-content: space-around;
     width: 100%;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0.5rem;
     overflow-x: auto;
-    /* 关键修复：阻止导航在移动端伸展占满全屏 */
     flex: 0 0 auto !important;
     align-items: center;
+    gap: 0.25rem;
   }
 
-  /* 移动端隐藏侧边栏底部用户信息，避免撑高 */
-  .sidebar-footer {
-    display: none;
-  }
+
 
   .nav-item {
     flex-direction: column;
-    padding: 0.5rem;
+    padding: 0.5rem 0.25rem;
     margin: 0;
-    border-radius: 8px;
+    border-radius: var(--border-radius-sm);
     width: auto;
     flex: 1 0 auto;
     text-align: center;
-    max-height: 64px;
+    max-height: 60px;
     white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    min-width: 60px;
+  }
+  
+  .nav-item .nav-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.125rem;
+  }
+  
+  .nav-item .nav-text {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.9;
   }
   
   .sidebar.collapsed .nav-item {
-    padding: 0.5rem;
+    padding: 0.5rem 0.25rem;
     margin: 0;
     justify-content: center;
   }
 
   .nav-item:hover {
     transform: none;
+    background-color: rgba(99, 102, 241, 0.1);
   }
 
-  /* 修复安卓端：去掉垂直高亮条并使用底部边框作为激活指示 */
   .nav-item::before,
   .nav-item:hover::before,
   .nav-item.active::before {
@@ -124,8 +256,55 @@
 
   .nav-item.active {
     border-left: none !important;
-    border-bottom: 3px solid var(--primary-color);
-    background: rgba(74, 144, 226, 0.15);
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary-color);
+  }
+  
+  .nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 2px;
+  }
+  
+  /* 移动端网格布局优化 */
+  .metric-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .plan-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: var(--border-radius-sm);
+  }
+  
+  /* 移动端按钮优化 */
+  .btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    min-height: 44px; /* 符合移动端触摸标准 */
+  }
+  
+  /* 移动端表单优化 */
+  input, textarea, select {
+    min-height: 44px;
+    font-size: 16px; /* 防止iOS缩放 */
   }
 
   .nav-item:hover {

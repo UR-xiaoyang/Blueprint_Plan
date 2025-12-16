@@ -7,23 +7,15 @@ interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   isCollapsed: boolean;
   onToggle: () => void;
-  isConnected: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange, isCollapsed, onToggle, isConnected }) => {
+export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange, isCollapsed, onToggle }) => {
   const handleViewChange = useCallback((view: ViewType) => {
     return () => onViewChange(view);
   }, [onViewChange]);
 
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header">
-        <h2 className="sidebar-title">Blueprint Plan</h2>
-        <button className="sidebar-toggle" onClick={onToggle} title={isCollapsed ? '展开' : '收起'}>
-          {isCollapsed ? '→' : '←'}
-        </button>
-      </div>
-      
       <nav className="sidebar-nav">
         <button
           className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}
@@ -44,11 +36,12 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
         <button
           className={`nav-item ${currentView === 'tasks' ? 'active' : ''}`}
           onClick={handleViewChange('tasks')}
-          data-tooltip="任务管理"
+          data-tooltip="任务"
         >
           <span className="nav-icon">✅</span>
-          <span className="nav-text">任务管理</span>
+          <span className="nav-text">任务</span>
         </button>
+
         <button
           className={`nav-item ${currentView === 'settings' ? 'active' : ''}`}
           onClick={handleViewChange('settings')}
@@ -60,10 +53,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
       </nav>
 
       <div className="sidebar-footer">
-        <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-          <span className="status-indicator"></span>
-          <span className="status-text">{isConnected ? '已连接' : '未连接'}</span>
-        </div>
+        <button className="sidebar-toggle" onClick={onToggle} title={isCollapsed ? '展开' : '收起'}>
+          {isCollapsed ? '→' : '←'}
+        </button>
       </div>
     </aside>
   );

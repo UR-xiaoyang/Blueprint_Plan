@@ -12,6 +12,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavigate }) => {
+  // ---------------- Helper Functions ----------------
   const getStatusColor = (status: Plan['status']) => {
     switch (status) {
       case 'planning': return 'status-planning';
@@ -32,40 +33,86 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavig
     }
   };
 
-  const statusData = useMemo(() => {
+  const getPriorityColor = (priority: Task['priority']) => {
+    switch (priority) {
+      case 'high': return '#EF4444';
+      case 'medium': return '#F59E0B';
+      case 'low': return '#3B82F6';
+      default: return '#6B7280';
+    }
+  };
+
+  // ---------------- Data Processing ----------------
+
+  // Statistics for Overview Cards
+  const stats = useMemo(() => {
+    const totalPlans = plans.length;
+    const activePlans = plans.filter(p => p.status === 'in-progress' || p.status === 'planning').length;
+    const completedPlans = plans.filter(p => p.status === 'completed').length;
+    
+    // Calculate total tasks and pending tasks across all plans
+    const allTasks = plans.flatMap(p => p.tasks || []);
+    const totalTasks = allTasks.length;
+    const pendingTasks = allTasks.filter(t => t.status !== 'completed').length;
+    const completedTasks = allTasks.filter(t => t.status === 'completed').length;
+
+    // Calculate completion rate
+    const completionRate = totalPlans > 0 
+      ? Math.round((completedPlans / totalPlans) * 100) 
+      : 0;
+
+    return {
+      totalPlans,
+      activePlans,
+      completedPlans,
+      totalTasks,
+      pendingTasks,
+      completedTasks,
+      completionRate
+    };
+  }, [plans]);
+
+  // Chart Data: Plan Status Distribution
+  const pieChartData = useMemo(() => {
     const counts = plans.reduce((acc, plan) => {
       acc[plan.status] = (acc[plan.status] || 0) + 1;
       return acc;
-    }, {} as Record<Plan['status'], number>);
+    }, {} as Record<string, number>);
     
-    return Object.entries(counts).map(([status, value]) => ({
-      name: getStatusText(status as Plan['status']),
-      value,
-      status: status as Plan['status']
-    }));
+    return [
+      { name: '规划中', value: counts['planning'] || 0, color: '#3B82F6' },
+      { name: '进行中', value: counts['in-progress'] || 0, color: '#F97316' },
+      { name: '已完成', value: counts['completed'] || 0, color: '#22C55E' },
+      { name: '已归档', value: counts['archived'] || 0, color: '#6B7280' },
+    ].filter(item => item.value > 0);
   }, [plans]);
 
-  const COLORS = {
-    planning: '#3B82F6',
-    'in-progress': '#F97316',
-    completed: '#22C55E',
-    archived: '#6B7280',
-  };
+  // Chart Data: Task Priority Distribution (or any other meaningful metric)
+  const taskPriorityData = useMemo(() => {
+    const allTasks = plans.flatMap(p => p.tasks || []);
+    const counts = allTasks.reduce((acc, task) => {
+      if (task.status !== 'completed') {
+        acc[task.priority] = (acc[task.priority] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-  const progressData = useMemo(() => {
-    return plans.map(plan => ({
-      name: plan.title,
-      progress: plan.progress,
-    }));
+    return [
+      { name: '高优先级', value: counts['high'] || 0, color: '#EF4444' },
+      { name: '中优先级', value: counts['medium'] || 0, color: '#F59E0B' },
+      { name: '低优先级', value: counts['low'] || 0, color: '#3B82F6' },
+    ];
   }, [plans]);
 
+  // Today's Tasks
   const todaysTasks = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     return plans
-      .flatMap(plan => plan.tasks)
+      .flatMap(plan => plan.tasks || [])
       .filter(task => {
+        if (!task || task.status === 'completed') return false;
         const startDate = new Date(task.startDate);
         const dueDate = new Date(task.dueDate);
         startDate.setHours(0, 0, 0, 0);
@@ -75,107 +122,225 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavig
           startDate <= today &&
           dueDate >= today
         );
+      })
+      .sort((a, b) => {
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
       });
   }, [plans]);
 
-  // 使用useMemo缓存计算结果，避免每次渲染时重新计算
-  const statistics = useMemo(() => {
-    const activePlans = plans.filter(plan => plan.status === 'in-progress');
-    const completedPlans = plans.filter(plan => plan.status === 'completed');
-    const averageProgress = plans.length > 0 
-      ? Math.round(plans.reduce((sum, plan) => sum + plan.progress, 0) / plans.length)
-      : 0;
-    
-    return {
-      activePlans,
-      completedPlans,
-      averageProgress,
-      totalPlans: plans.length,
-      activeCount: activePlans.length,
-      completedCount: completedPlans.length
-    };
-  }, [plans]);
-
-  // 缓存最近的计划列表
+  // Recent Plans
   const recentPlans = useMemo(() => {
     return plans
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 5);
+      .slice(0, 4); // Limit to 4
   }, [plans]);
 
+  // ---------------- Render ----------------
+
   return (
-    <div className="dashboard">
-      <div className="page-header">
-        <h2 className="page-title">仪表盘</h2>
-        <p className="page-description">欢迎回来！这里是您的计划概览和进度总结。</p>
+    <div className="dashboard-container">
+      
+      {/* Header Section */}
+      <div className="dashboard-header">
+        <div className="dashboard-title-group">
+          <h1 className="dashboard-title">
+            仪表盘
+          </h1>
+          <p className="dashboard-date">
+            {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+        <div className="dashboard-clock-wrapper">
+           <Clock />
+        </div>
       </div>
 
-      {/* 关键指标卡片 */}
-      <div className="grid grid-2">
+      {/* Overview Cards */}
+      <div className="overview-grid">
+        <OverviewCard 
+          title="活跃计划" 
+          value={stats.activePlans} 
+          icon="📋" 
+          color="#3B82F6" 
+          subtitle={`总计 ${stats.totalPlans} 个计划`}
+        />
+        <OverviewCard 
+          title="待办任务" 
+          value={stats.pendingTasks} 
+          icon="📝" 
+          color="#F59E0B" 
+          subtitle={`今日 ${todaysTasks.length} 个任务`}
+        />
+        <OverviewCard 
+          title="已完成任务" 
+          value={stats.completedTasks} 
+          icon="✅" 
+          color="#10B981" 
+          subtitle={`总任务 ${stats.totalTasks}`}
+        />
+        <OverviewCard 
+          title="计划完成率" 
+          value={`${stats.completionRate}%`} 
+          icon="📈" 
+          color="#8B5CF6" 
+          subtitle="基于所有计划"
+        />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="charts-grid">
+        
+        {/* Charts Section */}
         <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">🕰️ 时间</h3>
-          </div>
-          <div className="clock-wrapper">
-            <Clock />
-            <div className="date-display">
-              {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </div>
+          <h3 className="card-title" style={{ marginBottom: '1.5rem' }}>计划状态分布</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'var(--surface-color)', borderColor: 'var(--border-color)', borderRadius: '8px' }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
+                <Legend verticalAlign="bottom" height={36}/>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
+
+        <div className="card">
+          <h3 className="card-title" style={{ marginBottom: '1.5rem' }}>待办任务优先级</h3>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={taskPriorityData}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--border-color)" />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" width={80} tick={{fill: 'var(--text-secondary)'}} />
+                <Tooltip 
+                  cursor={{fill: 'var(--surface-hover)'}}
+                  contentStyle={{ backgroundColor: 'var(--surface-color)', borderColor: 'var(--border-color)', borderRadius: '8px' }}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
+                  {taskPriorityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="bottom-grid">
+        
+        {/* Today's Tasks List */}
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">✅ 今日任务</h3>
+            <h3 className="card-title">📅 今日待办</h3>
+            <span className="card-subtitle">{todaysTasks.length} 个任务</span>
           </div>
-          <div className="today-tasks">
-            <h4 className="tasks-title">总任务数: {todaysTasks.length}</h4>
+          
+          <div className="task-list-container">
             {todaysTasks.length > 0 ? (
-              <ul className="tasks-list">
-                {todaysTasks.map(task => (
-                  <li key={task.id} className={`task-item priority-${task.priority} status-${task.status}`}>
-                    <span className="task-title">{task.title}</span>
-                    <span className="task-status">{task.status === 'todo' ? '待办' : '进行中'}</span>
-                  </li>
-                ))}
-              </ul>
+              todaysTasks.map(task => (
+                <div key={task.id} className="task-list-item" style={{ borderLeft: `4px solid ${getPriorityColor(task.priority)}` }}>
+                  <div className="task-info">
+                    <div className="task-title">{task.title}</div>
+                    <div className="task-meta">
+                       截止: {new Date(task.dueDate).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className={`task-status-badge ${task.status === 'in-progress' ? 'task-status-in-progress' : 'task-status-todo'}`}>
+                    {task.status === 'in-progress' ? '进行中' : '待办'}
+                  </div>
+                </div>
+              ))
             ) : (
-              <p className="no-tasks">今天没有任务！</p>
+              <div className="empty-state">
+                今天没有待办任务，享受生活吧！🎉
+              </div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* 最近的计划 */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">📋 最近的计划</h3>
-          <button className="btn btn-primary">查看全部</button>
+        {/* Recent Plans */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">📋 最近计划</h3>
+            <button 
+              className="btn btn-secondary" 
+              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+              onClick={() => onNavigate('plans')}
+            >
+              全部计划
+            </button>
+          </div>
+
+          <div className="plan-list-container">
+            {recentPlans.length > 0 ? (
+              recentPlans.map(plan => (
+                <PlanItem
+                  key={plan.id}
+                  plan={plan}
+                  onSelect={onPlanSelect}
+                  getStatusColor={getStatusColor}
+                  getStatusText={getStatusText}
+                />
+              ))
+            ) : (
+              <div className="empty-state">
+                还没有创建任何计划
+                <br />
+                <button 
+                  className="btn btn-primary" 
+                  style={{ marginTop: '1rem' }}
+                  onClick={() => onNavigate('plans')}
+                >
+                  创建第一个计划
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        
-        {plans.length === 0 ? (
-          <div className="empty-state">
-            <p>还没有任何计划。开始创建您的第一个计划吧！</p>
-            <button className="btn btn-primary" onClick={() => onNavigate('plans')}>创建计划</button>
-          </div>
-        ) : (
-          <div className="plan-list">
-            {recentPlans.map(plan => (
-              <PlanItem
-                key={plan.id}
-                plan={plan}
-                onSelect={onPlanSelect}
-                getStatusColor={getStatusColor}
-                getStatusText={getStatusText}
-              />
-            ))}
-          </div>
-        )}
+
       </div>
     </div>
   );
 });
 
-// 将计划项目提取为单独的组件，使用memo优化
+// ---------------- Sub-components ----------------
+
+const OverviewCard = ({ title, value, icon, color, subtitle }: { title: string, value: string | number, icon: string, color: string, subtitle: string }) => (
+  <div className="card overview-card-content">
+    <div className="overview-icon-bg" style={{ color: color }}>
+      {icon}
+    </div>
+    <h4 className="overview-title">{title}</h4>
+    <div className="overview-value">
+      {value}
+    </div>
+    <div className="overview-subtitle">
+      {subtitle}
+    </div>
+  </div>
+);
+
 const PlanItem = memo(({ 
   plan, 
   onSelect, 
@@ -189,36 +354,29 @@ const PlanItem = memo(({
 }) => {
   const handleClick = () => onSelect(plan);
   
-  const formattedDates = useMemo(() => ({
-    start: new Date(plan.startDate).toLocaleDateString('zh-CN'),
-    end: new Date(plan.endDate).toLocaleDateString('zh-CN')
-  }), [plan.startDate, plan.endDate]);
-
   return (
     <div 
-      className={`plan-item status-${plan.status}`}
+      className={`plan-item`}
       onClick={handleClick}
     >
-      <div className="plan-info">
+      <div className="plan-header">
         <h4 className="plan-title">{plan.title}</h4>
-        <p className="plan-description">{plan.description}</p>
-        <div className="plan-meta">
-          <span className={`status-badge ${getStatusColor(plan.status)}`}>
-            {getStatusText(plan.status)}
-          </span>
-          <span className="plan-date">
-            {formattedDates.start} - {formattedDates.end}
-          </span>
-        </div>
+        <span className={`status-badge ${getStatusColor(plan.status)}`} style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
+          {getStatusText(plan.status)}
+        </span>
       </div>
-      <div className="plan-progress">
-        <div className="progress-bar">
+      
+      <div className="plan-progress-wrapper">
+        <div className="plan-progress-track">
           <div 
-            className="progress-fill" 
-            style={{ transform: `scaleX(${plan.progress / 100})` }}
+            className="plan-progress-fill" 
+            style={{ 
+              width: `${plan.progress}%`, 
+              backgroundColor: getStatusColor(plan.status) === 'status-completed' ? '#10B981' : '#3B82F6',
+            }}
           ></div>
         </div>
-        <span className="progress-text">{plan.progress}%</span>
+        <span className="plan-progress-text">{plan.progress.toFixed(0)}%</span>
       </div>
     </div>
   );
