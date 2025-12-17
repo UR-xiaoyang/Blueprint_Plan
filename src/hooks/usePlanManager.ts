@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plan, Task } from '../App';
+import { storage } from '../utils/storage';
 
 // 计划统计信息
 export interface PlanStats {
@@ -64,8 +65,16 @@ export const usePlanManager = (): UsePlanManagerReturn => {
         setLoading(false);
       }
     } else {
-      // Fallback for non-electron environment (e.g. browser dev)
-      setLoading(false);
+      // Fallback for non-electron environment (Web/Android)
+      try {
+        const storedPlans = await storage.getAllPlans();
+        setPlans(storedPlans);
+      } catch (err: any) {
+        console.error('Failed to load plans from storage:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -75,10 +84,15 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, [refreshData]);
 
   const createPlan = useCallback(async (planData: Omit<Plan, 'id' | 'progress' | 'tasks' | 'createdAt' | 'updatedAt'>) => {
-    if (!window.ipcRenderer) return;
     try {
-      // IPC call returns the created plan
-      const newPlan = await window.ipcRenderer.invoke('createPlan', planData);
+      let newPlan: Plan;
+      if (window.ipcRenderer) {
+        // IPC call returns the created plan
+        newPlan = await window.ipcRenderer.invoke('createPlan', planData);
+      } else {
+        // Local storage fallback
+        newPlan = await storage.createPlan(planData);
+      }
       setPlans(prev => [...prev, newPlan]);
     } catch (err: any) {
       console.error('Failed to create plan:', err);
@@ -88,9 +102,12 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, []);
 
   const updatePlan = useCallback(async (plan: Plan) => {
-    if (!window.ipcRenderer) return;
     try {
-      await window.ipcRenderer.invoke('updatePlan', plan);
+      if (window.ipcRenderer) {
+        await window.ipcRenderer.invoke('updatePlan', plan);
+      } else {
+        await storage.updatePlan(plan);
+      }
       setPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
     } catch (err: any) {
       console.error('Failed to update plan:', err);
@@ -100,9 +117,12 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, []);
 
   const deletePlan = useCallback(async (planId: string) => {
-    if (!window.ipcRenderer) return;
     try {
-      await window.ipcRenderer.invoke('deletePlan', planId);
+      if (window.ipcRenderer) {
+        await window.ipcRenderer.invoke('deletePlan', planId);
+      } else {
+        await storage.deletePlan(planId);
+      }
       setPlans(prev => prev.filter(p => p.id !== planId));
     } catch (err: any) {
       console.error('Failed to delete plan:', err);
@@ -112,7 +132,6 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, []);
 
   const createTask = useCallback(async (planId: string, taskData: Omit<Task, 'id' | 'planId' | 'createdAt' | 'updatedAt' | 'logs'>) => {
-    if (!window.ipcRenderer) return;
     try {
       // Add initial log
       const initialLog = {
@@ -126,7 +145,12 @@ export const usePlanManager = (): UsePlanManagerReturn => {
         logs: [initialLog]
       };
 
-      const updatedPlan = await window.ipcRenderer.invoke('createTask', planId, taskWithLog);
+      let updatedPlan: Plan;
+      if (window.ipcRenderer) {
+        updatedPlan = await window.ipcRenderer.invoke('createTask', planId, taskWithLog);
+      } else {
+        updatedPlan = await storage.createTask(planId, taskWithLog);
+      }
       setPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
     } catch (err: any) {
       console.error('Failed to create task:', err);
@@ -136,9 +160,13 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, []);
 
   const updateTask = useCallback(async (task: Task) => {
-    if (!window.ipcRenderer) return;
     try {
-      const updatedPlan = await window.ipcRenderer.invoke('updateTask', task);
+      let updatedPlan: Plan;
+      if (window.ipcRenderer) {
+        updatedPlan = await window.ipcRenderer.invoke('updateTask', task);
+      } else {
+        updatedPlan = await storage.updateTask(task);
+      }
       setPlans(prev => prev.map(p => p.id === task.planId ? updatedPlan : p));
     } catch (err: any) {
       console.error('Failed to update task:', err);
@@ -148,9 +176,13 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, []);
 
   const deleteTask = useCallback(async (planId: string, taskId: string) => {
-    if (!window.ipcRenderer) return;
     try {
-      const updatedPlan = await window.ipcRenderer.invoke('deleteTask', planId, taskId);
+      let updatedPlan: Plan;
+      if (window.ipcRenderer) {
+        updatedPlan = await window.ipcRenderer.invoke('deleteTask', planId, taskId);
+      } else {
+        updatedPlan = await storage.deleteTask(planId, taskId);
+      }
       setPlans(prev => prev.map(p => p.id === planId ? updatedPlan : p));
     } catch (err: any) {
       console.error('Failed to delete task:', err);
@@ -197,9 +229,12 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, [plans, updateTask]);
 
   const exportData = useCallback(async () => {
-    if (!window.ipcRenderer) return;
     try {
-      await window.ipcRenderer.invoke('exportData');
+      if (window.ipcRenderer) {
+        await window.ipcRenderer.invoke('exportData');
+      } else {
+        await storage.exportData();
+      }
     } catch (err: any) {
       console.error('Failed to export data:', err);
       setError(err.message);
@@ -207,9 +242,12 @@ export const usePlanManager = (): UsePlanManagerReturn => {
   }, []);
 
   const importData = useCallback(async (jsonData: string) => {
-    if (!window.ipcRenderer) return;
     try {
-      await window.ipcRenderer.invoke('importData', jsonData);
+      if (window.ipcRenderer) {
+        await window.ipcRenderer.invoke('importData', jsonData);
+      } else {
+        await storage.importData(jsonData);
+      }
       await refreshData();
     } catch (err: any) {
       console.error('Failed to import data:', err);
