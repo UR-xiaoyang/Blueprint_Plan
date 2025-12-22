@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, memo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { Plan, Task } from '../App';
+import { Plus, ChevronDown, ChevronRight, Edit2, Trash2 } from 'lucide-react';
 
 interface TaskManagerProps {
   selectedPlan: Plan | null;
@@ -250,9 +251,10 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTask
           <h3 className="card-title">任务列表</h3>
           <button 
             className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             onClick={() => setShowCreateForm(true)}
           >
-            ➕ 添加任务
+            <Plus size={16} /> 添加任务
           </button>
         </div>
 
@@ -486,14 +488,16 @@ const TaskCard = memo(({
             <button 
               className="btn-text"
               onClick={() => setShowLogs(!showLogs)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
-              {showLogs ? '▼ 收起日志' : `▶ 查看日志 (${task.logs?.length || 0})`}
+              {showLogs ? <><ChevronDown size={14} /> 收起日志</> : <><ChevronRight size={14} /> 查看日志 ({task.logs?.length || 0})</>}
             </button>
             <button 
               className="btn-text"
               onClick={() => setShowLogInput(!showLogInput)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
-              + 记一笔
+              <Plus size={14} /> 记一笔
             </button>
           </div>
           

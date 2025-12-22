@@ -1,4 +1,5 @@
 import React, { memo, useCallback } from 'react';
+import { LayoutDashboard, ClipboardList, CheckSquare, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings';
 
@@ -22,7 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
           onClick={handleViewChange('dashboard')}
           data-tooltip="仪表盘"
         >
-          <span className="nav-icon">📊</span>
+          <span className="nav-icon"><LayoutDashboard size={20} /></span>
           <span className="nav-text">仪表盘</span>
         </button>
         <button
@@ -30,7 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
           onClick={handleViewChange('plans')}
           data-tooltip="计划管理"
         >
-          <span className="nav-icon">📋</span>
+          <span className="nav-icon"><ClipboardList size={20} /></span>
           <span className="nav-text">计划管理</span>
         </button>
         <button
@@ -38,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
           onClick={handleViewChange('tasks')}
           data-tooltip="任务"
         >
-          <span className="nav-icon">✅</span>
+          <span className="nav-icon"><CheckSquare size={20} /></span>
           <span className="nav-text">任务</span>
         </button>
 
@@ -47,14 +48,14 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
           onClick={handleViewChange('settings')}
           data-tooltip="设置"
         >
-          <span className="nav-icon">⚙️</span>
+          <span className="nav-icon"><Settings size={20} /></span>
           <span className="nav-text">设置</span>
         </button>
       </nav>
 
       <div className="sidebar-footer">
         <button className="sidebar-toggle" onClick={onToggle} title={isCollapsed ? '展开' : '收起'}>
-          {isCollapsed ? '→' : '←'}
+          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
     </aside>

@@ -1,4 +1,5 @@
 import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
+import { Plus, Download, Upload, FileJson, Calendar, Trash2, Edit2, ArrowRight } from 'lucide-react';
 
 // Plan interface definition
 interface Plan {
@@ -173,8 +174,11 @@ const PlanCard: FC<PlanCardProps> = memo(({
           <h4 className="plan-card-title">{plan.title}</h4>
         </div>
         <p className="plan-card-description">{plan.description}</p>
-        <div className="plan-dates">
-          <span>{formattedDates.start} - {formattedDates.end}</span>
+        <div className="plan-dates" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <Calendar size={14} />
+          <span>{formattedDates.start}</span>
+          <ArrowRight size={14} />
+          <span>{formattedDates.end}</span>
         </div>
         <div className="plan-card-progress">
           <div className="progress-bar">
@@ -192,8 +196,8 @@ const PlanCard: FC<PlanCardProps> = memo(({
             {getStatusText(plan.status)}
         </span>
         <div className="plan-card-actions">
-          <button className="btn-icon" onClick={handleEdit} title="编辑">✏️</button>
-          <button className="btn-icon" onClick={handleDelete} title="删除">🗑️</button>
+          <button className="btn-icon" onClick={handleEdit} title="编辑"><Edit2 size={16} /></button>
+          <button className="btn-icon" onClick={handleDelete} title="删除"><Trash2 size={16} /></button>
         </div>
       </div>
     </div>
@@ -402,15 +406,17 @@ const PlanManager: FC<PlanManagerProps> = memo(({
             className="btn btn-primary"
             onClick={() => { setShowCreateForm(true); setEditingPlan(null); }}
             disabled={showCreateForm}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            + 创建新计划
+            <Plus size={16} /> 创建新计划
           </button>
           <button
             className="btn btn-secondary"
             onClick={handleDownloadGenericTemplate}
             title="下载一个空的JSON模板文件，用于编辑后批量导入"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
-            📄 下载通用模板
+            <FileJson size={16} /> 下载通用模板
           </button>
           
           <div className="import-export-actions">
@@ -420,8 +426,9 @@ const PlanManager: FC<PlanManagerProps> = memo(({
                   className="btn btn-secondary"
                   onClick={handleImportClick}
                   title="导入计划"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                 >
-                  📥 导入
+                  <Upload size={16} /> 导入
                 </button>
                 <input
                   ref={fileInputRef}
@@ -438,8 +445,9 @@ const PlanManager: FC<PlanManagerProps> = memo(({
                 className="btn btn-secondary"
                 onClick={handleExport}
                 title="导出计划"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >
-                📤 导出
+                <Download size={16} /> 导出
               </button>
             )}
           </div>

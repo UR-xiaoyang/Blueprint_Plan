@@ -63,15 +63,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends rpm libarchive-tools fakeroot dpkg
 
-      - name: Build and publish application
-        run: npm run dist
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build application
+        run: |
+          npm run build
+          npx electron-builder --publish never
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*
+          files: |
+            release/*.exe
+            release/*.pkg
+            release/*.dmg
+            release/*.deb
+            release/*.rpm
+            release/*.tar.gz
+            release/*.AppImage
           draft: true
           name: Release ${{ github.ref_name }}
           body: |

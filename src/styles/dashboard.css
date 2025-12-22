@@ -7,35 +7,6 @@
   overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.dashboard-title-group {
-  flex: 1;
-}
-
-.dashboard-title {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  margin-top: 0;
-}
-
-.dashboard-date {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.dashboard-clock-wrapper {
-  transform: scale(0.8);
-  transform-origin: right center;
-}
-
 /* Grids */
 .overview-grid {
   display: grid;
@@ -264,24 +235,7 @@
     padding-bottom: 5rem; /* Space for bottom navigation if present or just extra space */
   }
   
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .dashboard-clock-wrapper {
-    transform: scale(1);
-    transform-origin: left center;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .dashboard-title {
-    font-size: 1.5rem;
-  }
+  /* Compact header fits well on mobile, no specific overrides needed */
 
   .overview-grid {
     grid-template-columns: repeat(2, 1fr); 
@@ -328,9 +282,5 @@
 @media (max-width: 480px) {
   .overview-grid {
     grid-template-columns: 1fr; /* Stack overview cards on very small screens */
-  }
-  
-  .dashboard-title {
-    font-size: 1.25rem;
   }
 }

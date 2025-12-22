@@ -3,9 +3,9 @@ import { Plan, Task } from '../App';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import Clock from './Clock';
+import { ClipboardList, ListTodo, CheckCircle2, TrendingUp, Calendar, Clipboard } from 'lucide-react';
 
-interface DashboardProps {
+export interface DashboardProps {
   plans: Plan[];
   onPlanSelect: (plan: Plan) => void;
   onNavigate: (view: 'dashboard' | 'plans' | 'tasks' | 'settings') => void;
@@ -141,48 +141,33 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavig
   return (
     <div className="dashboard-container">
       
-      {/* Header Section */}
-      <div className="dashboard-header">
-        <div className="dashboard-title-group">
-          <h1 className="dashboard-title">
-            仪表盘
-          </h1>
-          <p className="dashboard-date">
-            {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        <div className="dashboard-clock-wrapper">
-           <Clock />
-        </div>
-      </div>
-
       {/* Overview Cards */}
       <div className="overview-grid">
         <OverviewCard 
           title="活跃计划" 
           value={stats.activePlans} 
-          icon="📋" 
+          icon={<ClipboardList size={24} />} 
           color="#3B82F6" 
           subtitle={`总计 ${stats.totalPlans} 个计划`}
         />
         <OverviewCard 
           title="待办任务" 
           value={stats.pendingTasks} 
-          icon="📝" 
+          icon={<ListTodo size={24} />} 
           color="#F59E0B" 
           subtitle={`今日 ${todaysTasks.length} 个任务`}
         />
         <OverviewCard 
           title="已完成任务" 
           value={stats.completedTasks} 
-          icon="✅" 
+          icon={<CheckCircle2 size={24} />} 
           color="#10B981" 
           subtitle={`总任务 ${stats.totalTasks}`}
         />
         <OverviewCard 
           title="计划完成率" 
           value={`${stats.completionRate}%`} 
-          icon="📈" 
+          icon={<TrendingUp size={24} />} 
           color="#8B5CF6" 
           subtitle="基于所有计划"
         />
@@ -252,7 +237,9 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavig
         {/* Today's Tasks List */}
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">📅 今日待办</h3>
+            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Calendar size={20} /> 今日待办
+            </h3>
             <span className="card-subtitle">{todaysTasks.length} 个任务</span>
           </div>
           
@@ -282,7 +269,9 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavig
         {/* Recent Plans */}
         <div className="card">
           <div className="card-header">
-            <h3 className="card-title">📋 最近计划</h3>
+            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Clipboard size={20} /> 最近计划
+            </h3>
             <button 
               className="btn btn-secondary" 
               style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
@@ -326,7 +315,7 @@ const Dashboard: React.FC<DashboardProps> = memo(({ plans, onPlanSelect, onNavig
 
 // ---------------- Sub-components ----------------
 
-const OverviewCard = ({ title, value, icon, color, subtitle }: { title: string, value: string | number, icon: string, color: string, subtitle: string }) => (
+const OverviewCard = ({ title, value, icon, color, subtitle }: { title: string, value: string | number, icon: React.ReactNode, color: string, subtitle: string }) => (
   <div className="card overview-card-content">
     <div className="overview-icon-bg" style={{ color: color }}>
       {icon}
