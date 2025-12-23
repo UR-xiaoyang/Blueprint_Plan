@@ -52,7 +52,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^8.2.2",
-    "electron": "^39.2.6",
+    "electron": "^33.3.0",
     "electron-builder": "^26.0.12",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
@@ -73,7 +73,8 @@
     ],
     "files": [
       "dist/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "package.json"
     ],
     "directories": {
       "buildResources": "assets",
@@ -97,7 +98,8 @@
       "target": [
         "deb",
         "rpm",
-        "tar.gz"
+        "tar.gz",
+        "AppImage"
       ],
       "maintainer": "URxiaoyang <xiaoyang@ur-xiaoyang.com>"
     }

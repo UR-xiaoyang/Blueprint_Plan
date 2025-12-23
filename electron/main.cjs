@@ -1,6 +1,13 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+
+// Global error handler for uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  dialog.showErrorBox('Application Error', `An unexpected error occurred:\n${error.message}\n\n${error.stack}`);
+  app.quit();
+});
 
 // Set user data path before app is ready to avoid cache issues
 const userDataPath = path.join(app.getPath('appData'), 'Blueprint-Plan');
