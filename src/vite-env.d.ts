@@ -10,4 +10,8 @@ interface Window {
     send(channel: string, ...args: any[]): void;
     on(channel: string, listener: (...args: any[]) => void): () => void;
   };
+  appDialog?: {
+    alert: (message: string, title?: string) => Promise<void>;
+    confirm: (message: string, title?: string) => Promise<boolean>;
+  };
 }

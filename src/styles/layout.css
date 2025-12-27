@@ -14,6 +14,22 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+html, body, #root {
+  -webkit-app-region: no-drag;
+}
+
+/* Ensure inputs are always selectable and clickable */
+input, textarea, [contenteditable] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -webkit-app-region: no-drag !important;
+  cursor: text;
+}
+
+select, option, button, a, label, [role="button"], [role="textbox"], [role="combobox"], [tabindex] {
+  -webkit-app-region: no-drag !important;
+}
+
 .app-content {
   display: flex;
   flex: 1;
@@ -29,6 +45,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
   z-index: 9999;
   border-bottom: 1px solid var(--border-color);
   user-select: none;
@@ -41,7 +58,7 @@
   display: flex;
   align-items: center;
   padding-left: 1rem;
-  -webkit-app-region: drag;
+  -webkit-app-region: drag !important;
   gap: 8px;
 }
 

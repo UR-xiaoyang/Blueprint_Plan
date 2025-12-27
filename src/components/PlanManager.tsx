@@ -1,5 +1,6 @@
 import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
 import { Plus, Download, Upload, FileJson, Calendar, Trash2, Edit2, ArrowRight } from 'lucide-react';
+// import AIPlanGenerator from './AIPlanGenerator'; // Removed as per user request to move to separate view
 
 // Plan interface definition
 interface Plan {
@@ -214,6 +215,7 @@ const PlanManager: FC<PlanManagerProps> = memo(({
   importData
 }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  // const [showAIGenerator, setShowAIGenerator] = useState(false); // Removed
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -261,7 +263,9 @@ const PlanManager: FC<PlanManagerProps> = memo(({
       setShowCreateForm(false);
     } catch (error) {
       console.error('操作失败:', error);
-      alert('操作失败，请重试');
+      if (window.appDialog) {
+        await window.appDialog.alert('操作失败，请重试');
+      }
     }
   }, [editingPlan, formData, createPlan, updatePlan]);
 
@@ -315,12 +319,17 @@ const PlanManager: FC<PlanManagerProps> = memo(({
   };
 
   const handleDelete = useCallback(async (planId: string) => {
-    if (window.confirm('确定要删除这个计划吗？此操作无法撤销。')) {
+    const ok = window.appDialog
+      ? await window.appDialog.confirm('确定要删除这个计划吗？此操作无法撤销。')
+      : window.confirm('确定要删除这个计划吗？此操作无法撤销。');
+    if (ok) {
       try {
         await deletePlan(planId);
       } catch (error) {
         console.error('删除计划失败:', error);
-        alert('删除计划失败，请重试');
+        if (window.appDialog) {
+          await window.appDialog.alert('删除计划失败，请重试');
+        }
       }
     }
   }, [deletePlan]);
@@ -341,10 +350,14 @@ const PlanManager: FC<PlanManagerProps> = memo(({
     if (exportData) {
       try {
         await exportData();
-        alert('导出成功！文件已保存到您的下载文件夹。');
+        if (window.appDialog) {
+          await window.appDialog.alert('导出成功！文件已保存到您的下载文件夹。');
+        }
       } catch (error) {
         console.error('导出失败:', error);
-        alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        if (window.appDialog) {
+          await window.appDialog.alert(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
       }
     }
   }, [exportData]);
@@ -362,10 +375,14 @@ const PlanManager: FC<PlanManagerProps> = memo(({
         const jsonData = await file.text();
         console.log('[PlanManager] File content read:', jsonData);
         await importData(jsonData);
-        alert('计划导入成功！');
+        if (window.appDialog) {
+          await window.appDialog.alert('计划导入成功！');
+        }
       } catch (error) {
         console.error('导入失败:', error);
-        alert(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        if (window.appDialog) {
+          await window.appDialog.alert(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
       } finally {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -410,6 +427,7 @@ const PlanManager: FC<PlanManagerProps> = memo(({
           >
             <Plus size={16} /> 创建新计划
           </button>
+
           <button
             className="btn btn-secondary"
             onClick={handleDownloadGenericTemplate}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, memo, useEffect } from 'react';
+import { useState, useCallback, useMemo, memo, useEffect, useRef } from 'react';
 import "./styles/variables.css";
 import "./styles/layout.css";
 import "./styles/components.css";
@@ -9,6 +9,7 @@ import "./styles/animations.css";
 import Dashboard from "./components/Dashboard";
 import PlanManager from "./components/PlanManager";
 import TaskManager from "./components/TaskManager";
+import AIPlanView from "./components/AIPlanView";
 import Sidebar from "./components/Sidebar";
 import TitleBar from "./components/TitleBar";
 import { NotificationContainer, useNotifications } from "./components/Notification";
@@ -57,6 +58,13 @@ type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings';
 const App: React.FC = memo(() => {
   const { themeMode } = useTheme(); // Initialize theme
   const { debugMode } = useDebugMode();
+  const [dialogState, setDialogState] = useState<{
+    type: 'alert' | 'confirm';
+    title?: string;
+    message: string;
+  } | null>(null);
+  const dialogResolveRef = useRef<null | ((value: boolean) => void)>(null);
+  const lastActiveElementRef = useRef<HTMLElement | null>(null);
 
   // Set StatusBar style for mobile - Force Black Background
   useEffect(() => {
@@ -99,6 +107,84 @@ const App: React.FC = memo(() => {
       document.body.classList.remove('debug-mode');
     }
   }, [debugMode]);
+
+  useEffect(() => {
+    const handler = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const editable = target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], [role="textbox"], [role="combobox"]') as HTMLElement | null;
+      if (!editable) return;
+
+      try {
+        window.focus();
+      } catch (_) {}
+
+      requestAnimationFrame(() => {
+        try {
+          editable.focus();
+        } catch (_) {}
+      });
+    };
+
+    document.addEventListener('pointerdown', handler, true);
+    return () => {
+      document.removeEventListener('pointerdown', handler, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    const alertFn = async (message: string, title?: string) => {
+      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      lastActiveElementRef.current = active;
+      return await new Promise<void>((resolve) => {
+        dialogResolveRef.current = () => {
+          resolve();
+        };
+        setDialogState({ type: 'alert', title, message });
+      });
+    };
+
+    const confirmFn = async (message: string, title?: string) => {
+      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      lastActiveElementRef.current = active;
+      return await new Promise<boolean>((resolve) => {
+        dialogResolveRef.current = (v: boolean) => {
+          resolve(v);
+        };
+        setDialogState({ type: 'confirm', title, message });
+      });
+    };
+
+    window.appDialog = { alert: alertFn, confirm: confirmFn };
+    return () => {
+      if (window.appDialog?.alert === alertFn && window.appDialog?.confirm === confirmFn) {
+        delete window.appDialog;
+      }
+    };
+  }, []);
+
+  const closeDialog = useCallback((result: boolean) => {
+    const resolve = dialogResolveRef.current;
+    setDialogState(null);
+    dialogResolveRef.current = null;
+    if (resolve) {
+      resolve(result);
+    }
+
+    requestAnimationFrame(() => {
+      try {
+        window.focus();
+      } catch (_) {}
+      const el = lastActiveElementRef.current;
+      if (el && document.contains(el)) {
+        try {
+          el.focus();
+        } catch (_) {}
+      }
+      lastActiveElementRef.current = null;
+    });
+  }, []);
 
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
@@ -160,6 +246,10 @@ const App: React.FC = memo(() => {
   );
 
   const handleViewChange = useCallback((view: ViewType) => {
+    // 切换页面时清除当前焦点，防止焦点卡死在之前的输入框上
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setCurrentView(view);
   }, []);
 
@@ -167,6 +257,35 @@ const App: React.FC = memo(() => {
     setSelectedPlanId(plan.id);
     setCurrentView('tasks');
   }, []);
+
+  const handleAIPlanGenerated = useCallback(async (planData: Omit<Plan, 'id' | 'createdAt' | 'updatedAt' | 'progress'>) => {
+    try {
+      if (importData) {
+         const planForImport = {
+            ...planData,
+            id: "ai-generated-" + Date.now(), // Temporary ID, importData will generate new UUID
+            tasks: planData.tasks.map(t => ({
+               ...t,
+               id: "ai-task-" + Math.random(), // Temp ID
+               planId: "temp"
+            }))
+         };
+         
+         await importData(JSON.stringify([planForImport]));
+         // 跳转到计划管理查看
+         setCurrentView('plans');
+      } else {
+         if (window.appDialog) {
+           await window.appDialog.alert("无法保存计划：导入功能不可用。");
+         }
+      }
+    } catch (error) {
+      console.error('保存 AI 计划失败:', error);
+      if (window.appDialog) {
+        await window.appDialog.alert('保存计划失败');
+      }
+    }
+  }, [importData]);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => !prev);
@@ -228,6 +347,10 @@ const App: React.FC = memo(() => {
             addTaskLog={addTaskLog}
           />
         );
+      case 'ai-planning':
+        return (
+          <AIPlanView onPlanGenerated={handleAIPlanGenerated} />
+        );
       case 'settings':
         return <Settings />;
       default:
@@ -245,7 +368,8 @@ const App: React.FC = memo(() => {
     'dashboard': '仪表盘',
     'plans': '计划管理',
     'tasks': '任务',
-    'settings': '设置'
+    'settings': '设置',
+    'ai-planning': 'AI 计划'
   }), []);
 
   return (
@@ -289,6 +413,54 @@ const App: React.FC = memo(() => {
         notifications={notifications}
         onRemove={removeNotification}
       />
+
+      {dialogState && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100000,
+            WebkitAppRegion: 'no-drag',
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div
+            style={{
+              width: 'min(520px, 92vw)',
+              background: 'var(--surface-color)',
+              color: 'var(--text-primary)',
+              borderRadius: 12,
+              border: '1px solid var(--border-color)',
+              boxShadow: '0 14px 40px rgba(0,0,0,0.35)',
+              padding: 16,
+              WebkitAppRegion: 'no-drag',
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div style={{ fontWeight: 700, marginBottom: 10 }}>
+              {dialogState.title || '提示'}
+            </div>
+            <div style={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+              {dialogState.message}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
+              {dialogState.type === 'confirm' && (
+                <button className="btn" onClick={() => closeDialog(false)}>
+                  取消
+                </button>
+              )}
+              <button className="btn btn-primary" onClick={() => closeDialog(true)}>
+                确定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

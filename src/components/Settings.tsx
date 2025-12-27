@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { useDebugMode } from '../hooks/useDebugMode';
+import { aiService, AIConfig } from '../services/aiService';
 
 const Settings: React.FC = () => {
   const { themeMode, setThemeMode, schedule, setSchedule } = useTheme();
   const { debugMode, setDebugMode } = useDebugMode();
   const [realAppVersion, setRealAppVersion] = useState('');
   const [showProgramInfo, setShowProgramInfo] = useState(false);
+
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  
+  // AI Config State
+  const [aiConfig, setAiConfig] = useState<AIConfig>(aiService.getConfig());
 
   const handleThemeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newTheme = event.target.value as 'light' | 'dark' | 'auto';
@@ -28,6 +34,39 @@ const Settings: React.FC = () => {
         await window.ipcRenderer.invoke('saveSettings', { ...current, debugMode: enabled });
       }
     })();
+  };
+
+  const handleAiConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'provider') {
+      setAiConfig(prev => ({ ...prev, provider: value as any }));
+      return;
+    }
+
+    setAiConfig(prev => {
+      const provider = prev.provider;
+      // update the specific provider config
+      return {
+        ...prev,
+        [provider]: {
+          ...prev[provider],
+          [name]: value
+        }
+      };
+    });
+  };
+
+  const getCurrentProviderConfig = () => {
+    return aiConfig[aiConfig.provider];
+  };
+
+  const currentConfig = getCurrentProviderConfig();
+
+  const saveAiConfig = () => {
+    aiService.saveConfig(aiConfig);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
   // 初始化加载其他设置（调试模式）
@@ -119,6 +158,100 @@ const Settings: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="setting-section">
+        <h3>AI 服务设置</h3>
+        <div className="form-group" style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>服务提供商</label>
+          <select
+            name="provider"
+            value={aiConfig.provider}
+            onChange={handleAiConfigChange}
+            className="ai-select"
+            style={{ 
+              width: '100%', 
+              padding: '0.5rem', 
+              borderRadius: 'var(--radius-md)', 
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <option value="openai">OpenAI</option>
+            <option value="ollama">Ollama (本地)</option>
+            <option value="custom">自定义 (Compatible API)</option>
+          </select>
+        </div>
+
+        <>
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+              API Key {aiConfig.provider === 'ollama' && <span style={{fontWeight: 'normal', fontSize: '0.9rem', opacity: 0.7}}>(Ollama 通常无需填写)</span>}
+            </label>
+            <input
+              type="password"
+              name="apiKey"
+              value={currentConfig.apiKey}
+              onChange={handleAiConfigChange}
+              placeholder={aiConfig.provider === 'ollama' ? "ollama" : "sk-..."}
+              style={{ 
+                width: '100%', 
+                padding: '0.5rem', 
+                borderRadius: 'var(--radius-md)', 
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)'
+              }}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Base URL (可选)</label>
+            <input
+              type="text"
+              name="baseUrl"
+              value={currentConfig.baseUrl || ''}
+              onChange={handleAiConfigChange}
+              placeholder={aiConfig.provider === 'ollama' ? "http://localhost:11434/v1" : "https://api.openai.com/v1"}
+              style={{ 
+                width: '100%', 
+                padding: '0.5rem', 
+                borderRadius: 'var(--radius-md)', 
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)'
+              }}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>模型名称 (可选)</label>
+            <input
+              type="text"
+              name="model"
+              value={currentConfig.model || ''}
+              onChange={handleAiConfigChange}
+              placeholder={aiConfig.provider === 'ollama' ? "llama3" : "gpt-3.5-turbo"}
+              style={{ 
+                width: '100%', 
+                padding: '0.5rem', 
+                borderRadius: 'var(--radius-md)', 
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)'
+              }}
+            />
+          </div>
+        </>
+        
+        <button 
+          onClick={saveAiConfig}
+          className="btn btn-primary"
+          style={{ marginTop: '0.5rem' }}
+        >
+          保存 AI 配置
+        </button>
       </div>
 
       <div className="setting-section">

@@ -12,6 +12,21 @@ interface TaskManagerProps {
 }
 
 function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTaskLog }: TaskManagerProps) {
+  const appAlert = useCallback(async (message: string) => {
+    if (window.appDialog?.alert) {
+      await window.appDialog.alert(message);
+      return;
+    }
+    alert(message);
+  }, []);
+
+  const appConfirm = useCallback(async (message: string) => {
+    if (window.appDialog?.confirm) {
+      return await window.appDialog.confirm(message);
+    }
+    return window.confirm(message);
+  }, []);
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formData, setFormData] = useState({
@@ -67,9 +82,9 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTask
       setShowCreateForm(false);
     } catch (error) {
       console.error("操作失败:", error);
-      alert("操作失败，请重试");
+      await appAlert("操作失败，请重试");
     }
-  }, [editingTask, formData, selectedPlan, createTask, updateTask]);
+  }, [editingTask, formData, selectedPlan, createTask, updateTask, appAlert]);
 
   const handleEdit = useCallback((task: Task) => {
     setEditingTask(task);
@@ -87,15 +102,15 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTask
   const handleDelete = useCallback(async (taskId: string) => {
     if (!selectedPlan) return;
     
-    if (window.confirm('确定要删除这个任务吗？此操作无法撤销。')) {
+    if (await appConfirm('确定要删除这个任务吗？此操作无法撤销。')) {
       try {
         await deleteTask(selectedPlan.id, taskId);
       } catch (error) {
         console.error('删除任务失败:', error);
-        alert('删除任务失败，请重试');
+        await appAlert('删除任务失败，请重试');
       }
     }
-  }, [selectedPlan, deleteTask]);
+  }, [selectedPlan, deleteTask, appAlert, appConfirm]);
 
   const handleStatusChange = useCallback(async (taskId: string, newStatus: Task['status']) => {
     if (!selectedPlan) return;
@@ -111,10 +126,10 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTask
         await updateTask(updatedTask);
       } catch (error) {
         console.error('更新任务状态失败:', error);
-        alert('更新任务状态失败，请重试');
+        await appAlert('更新任务状态失败，请重试');
       }
     }
-  }, [selectedPlan, updateTask]);
+  }, [selectedPlan, updateTask, appAlert]);
 
   const handleCancel = useCallback(() => {
     setShowCreateForm(false);
@@ -200,14 +215,14 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTask
     });
   }, [selectedPlan]);
 
-  const handleAddLog = useCallback(async (taskId: string, content: string) => {
+  const handleAddLog = useCallback(async (taskId: string, logContent: string) => {
     try {
       await addTaskLog(taskId, content);
     } catch (error) {
       console.error('添加日志失败:', error);
-      alert('添加日志失败，请重试');
+      await appAlert('添加日志失败，请重试');
     }
-  }, [addTaskLog]);
+  }, [addTaskLog, appAlert]);
 
   if (!selectedPlan) {
     return (

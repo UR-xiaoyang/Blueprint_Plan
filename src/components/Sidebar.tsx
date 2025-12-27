@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from 'react';
-import { LayoutDashboard, ClipboardList, CheckSquare, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, CheckSquare, Settings, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
-type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings';
+type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings' | 'ai-planning';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -41,6 +41,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
         >
           <span className="nav-icon"><CheckSquare size={20} /></span>
           <span className="nav-text">任务</span>
+        </button>
+
+        <button
+          className={`nav-item ${currentView === 'ai-planning' ? 'active' : ''}`}
+          onClick={handleViewChange('ai-planning')}
+          data-tooltip="AI 计划"
+        >
+          <span className="nav-icon"><Sparkles size={20} /></span>
+          <span className="nav-text">AI 计划</span>
         </button>
 
         <button
