@@ -63,8 +63,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends rpm libarchive-tools fakeroot dpkg
 
-      - name: Build application
-        run: npm run build
+      - name: Run TypeScript Compiler
+        run: npx tsc
+
+      - name: Run Vite Build
+        run: npx vite build
 
       - name: Build Electron App (Linux)
         if: runner.os == 'Linux'
