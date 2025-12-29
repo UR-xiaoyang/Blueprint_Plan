@@ -386,7 +386,6 @@ ${JSON.stringify({
     title: planData.title || currentPlan.title,
     description: planData.description || currentPlan.description,
     status: currentPlan.status,
-    progress: currentPlan.progress,
     startDate: currentPlan.startDate,
     endDate: currentPlan.endDate, // 这里应该重新计算，但简化起见暂且保留或由外部更新
     tasks: finalTasks
@@ -563,7 +562,6 @@ async function generatePlanWithLLM(request: AIPlanRequest, config: AIProviderCon
     title: planData.title || `关于 ${request.goal} 的计划`,
     description: planData.description || 'AI 生成计划',
     status: 'planning',
-    progress: 0,
     startDate,
     endDate,
     tasks: finalTasks

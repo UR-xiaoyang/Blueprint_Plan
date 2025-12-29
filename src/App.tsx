@@ -53,7 +53,7 @@ export interface Plan {
   updatedAt: string;
 }
 
-type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings';
+type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings' | 'ai-planning';
 
 const App: React.FC = memo(() => {
   const { themeMode } = useTheme(); // Initialize theme

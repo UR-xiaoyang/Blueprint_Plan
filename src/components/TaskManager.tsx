@@ -217,7 +217,7 @@ function TaskManager({ selectedPlan, createTask, updateTask, deleteTask, addTask
 
   const handleAddLog = useCallback(async (taskId: string, logContent: string) => {
     try {
-      await addTaskLog(taskId, content);
+      await addTaskLog(taskId, logContent);
     } catch (error) {
       console.error('添加日志失败:', error);
       await appAlert('添加日志失败，请重试');
