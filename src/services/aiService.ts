@@ -82,9 +82,10 @@ export interface AIProviderConfig {
 }
 
 export interface AIConfig {
-  provider: 'openai' | 'custom' | 'ollama';
+  provider: 'openai' | 'custom' | 'ollama' | 'openrouter';
   openai: AIProviderConfig;
   ollama: AIProviderConfig;
+  openrouter: AIProviderConfig;
   custom: AIProviderConfig;
 }
 
@@ -99,6 +100,11 @@ const DEFAULT_CONFIG: AIConfig = {
     apiKey: '',
     baseUrl: 'http://localhost:11434/v1',
     model: 'llama3'
+  },
+  openrouter: {
+    apiKey: '',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'openai/gpt-3.5-turbo'
   },
   custom: {
     apiKey: '',
@@ -130,9 +136,10 @@ export const aiService = {
           ...parsed,
           openai: { ...DEFAULT_CONFIG.openai, ...(parsed.openai || {}), },
           ollama: { ...DEFAULT_CONFIG.ollama, ...(parsed.ollama || {}), },
+          openrouter: { ...DEFAULT_CONFIG.openrouter, ...(parsed.openrouter || {}), },
           custom: { ...DEFAULT_CONFIG.custom, ...(parsed.custom || {}), },
         };
-        if (merged.provider !== 'openai' && merged.provider !== 'custom' && merged.provider !== 'ollama') {
+        if (merged.provider !== 'openai' && merged.provider !== 'custom' && merged.provider !== 'ollama' && merged.provider !== 'openrouter') {
           merged.provider = DEFAULT_CONFIG.provider;
         }
         return merged;
@@ -272,12 +279,19 @@ ${JSON.stringify({
   }
 
   const requestContent = async (extraMessages?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`
+    };
+
+    if (config.provider === 'openrouter') {
+      headers['HTTP-Referer'] = 'http://localhost:3000';
+      headers['X-Title'] = 'Blueprint Plan';
+    }
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`
-      },
+      headers,
       body: JSON.stringify({
         model: config.model || 'gpt-3.5-turbo',
         messages: [
@@ -435,12 +449,19 @@ async function generatePlanWithLLM(request: AIPlanRequest, config: AIProviderCon
   }
 
   const requestOnce = async (stream: boolean) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${config.apiKey}`
+    };
+
+    if (config.provider === 'openrouter') {
+      headers['HTTP-Referer'] = 'http://localhost:3000';
+      headers['X-Title'] = 'Blueprint Plan';
+    }
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`
-      },
+      headers,
       body: JSON.stringify({
         model: config.model || 'gpt-3.5-turbo',
         messages: [

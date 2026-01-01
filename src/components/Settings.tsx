@@ -10,6 +10,7 @@ const Settings: React.FC = () => {
   const [showProgramInfo, setShowProgramInfo] = useState(false);
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  const [globalShortcut, setGlobalShortcut] = useState('');
   
   // AI Config State
   const [aiConfig, setAiConfig] = useState<AIConfig>(aiService.getConfig());
@@ -50,7 +51,7 @@ const Settings: React.FC = () => {
       return {
         ...prev,
         [provider]: {
-          ...prev[provider],
+          ...(prev[provider] || {}),
           [name]: value
         }
       };
@@ -58,7 +59,7 @@ const Settings: React.FC = () => {
   };
 
   const getCurrentProviderConfig = () => {
-    return aiConfig[aiConfig.provider];
+    return aiConfig[aiConfig.provider] || { apiKey: '', baseUrl: '', model: '' };
   };
 
   const currentConfig = getCurrentProviderConfig();
@@ -69,13 +70,99 @@ const Settings: React.FC = () => {
     setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
-  // 初始化加载其他设置（调试模式）
+  const handleShortcutKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const keys = [];
+    if (e.ctrlKey) keys.push('Ctrl');
+    if (e.metaKey) keys.push('Super'); // Meta key (Windows/Command)
+    if (e.altKey) keys.push('Alt');
+    if (e.shiftKey) keys.push('Shift');
+
+    // Key code processing
+    let key = e.key.toUpperCase();
+    
+    // Ignore pure modifier presses
+    if (['CONTROL', 'ALT', 'SHIFT', 'META'].includes(key)) {
+      return;
+    }
+    
+    // Normalize special keys
+    const specialKeys: Record<string, string> = {
+      ' ': 'Space',
+      'ARROWUP': 'Up',
+      'ARROWDOWN': 'Down',
+      'ARROWLEFT': 'Left',
+      'ARROWRIGHT': 'Right',
+      'ESCAPE': 'Esc',
+    };
+    
+    if (specialKeys[e.key]) {
+      key = specialKeys[e.key];
+    } else if (key.length === 1) {
+      // For letters/numbers, keep uppercase
+    } else {
+      // For F1-F12, etc, use key as is but ensure first char cap? 
+      // e.key is usually "F1", "Enter", "Backspace"
+      // Electron accelerators are case insensitive mostly but standard is Title Case
+      // Let's use e.key but handle modifiers
+      // e.key for 'a' is 'a'. We want 'A'.
+      if (e.key.length === 1) {
+         key = e.key.toUpperCase();
+      } else {
+         key = e.key; // "F1", "Home", etc.
+      }
+    }
+
+    // Add key to list
+    keys.push(key);
+    
+    const shortcut = keys.join('+');
+    setGlobalShortcut(shortcut);
+    
+    // Auto save
+    (async () => {
+      if (window.ipcRenderer) {
+        const current = await window.ipcRenderer.invoke('getSettings');
+        await window.ipcRenderer.invoke('saveSettings', { ...current, globalShortcut: shortcut });
+      }
+    })();
+  };
+
+  const clearShortcut = () => {
+    setGlobalShortcut('');
+    // Auto save empty (which might disable it or revert to default depending on backend logic? 
+    // Backend uses || 'Alt+A', so clearing means reverting to default effectively unless we handle empty string explicitly.
+    // Let's make it explicitly disable if empty? Or just reset to Alt+A?
+    // User probably wants to disable or reset.
+    // If we want to disable, we should send something specific or handle empty string in backend.
+    // Currently backend: settings.globalShortcut || 'Alt+A'. So empty string -> 'Alt+A'.
+    // If user wants to disable, that's a different feature.
+    // For now, let's just allow changing it. If they clear, it resets to default visually?
+    // Let's just set it to 'Alt+A' when cleared for clarity.
+    const defaultShortcut = 'Alt+A';
+    setGlobalShortcut(defaultShortcut);
+    (async () => {
+      if (window.ipcRenderer) {
+        const current = await window.ipcRenderer.invoke('getSettings');
+        await window.ipcRenderer.invoke('saveSettings', { ...current, globalShortcut: defaultShortcut });
+      }
+    })();
+  };
+
+  // 初始化加载其他设置（调试模式、快捷键）
   useEffect(() => {
     (async () => {
       if (window.ipcRenderer) {
         const settings = await window.ipcRenderer.invoke('getSettings');
         if (typeof settings.debugMode === 'boolean') {
           setDebugMode(settings.debugMode);
+        }
+        if (settings.globalShortcut) {
+          setGlobalShortcut(settings.globalShortcut);
+        } else {
+          setGlobalShortcut('Alt+A'); // Default
         }
       }
     })();
@@ -161,6 +248,39 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="setting-section">
+        <h3>全局快捷键</h3>
+        <p className="setting-description" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+          点击输入框并按下键盘组合键来设置唤醒/隐藏应用的快捷键。
+        </p>
+        <div className="setting-option" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input
+            type="text"
+            value={globalShortcut}
+            onKeyDown={handleShortcutKeyDown}
+            readOnly
+            placeholder="按下快捷键 (例如 Alt+A)"
+            style={{
+              padding: '0.5rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              minWidth: '200px',
+              textAlign: 'center',
+              cursor: 'pointer'
+            }}
+          />
+          <button 
+            onClick={clearShortcut}
+            className="btn-secondary"
+            style={{ padding: '0.5rem 1rem' }}
+          >
+            重置默认
+          </button>
+        </div>
+      </div>
+
+      <div className="setting-section">
         <h3>AI 服务设置</h3>
         <div className="form-group" style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>服务提供商</label>
@@ -180,6 +300,7 @@ const Settings: React.FC = () => {
           >
             <option value="openai">OpenAI</option>
             <option value="ollama">Ollama (本地)</option>
+            <option value="openrouter">OpenRouter</option>
             <option value="custom">自定义 (Compatible API)</option>
           </select>
         </div>
@@ -213,7 +334,13 @@ const Settings: React.FC = () => {
               name="baseUrl"
               value={currentConfig.baseUrl || ''}
               onChange={handleAiConfigChange}
-              placeholder={aiConfig.provider === 'ollama' ? "http://localhost:11434/v1" : "https://api.openai.com/v1"}
+              placeholder={
+                aiConfig.provider === 'ollama' 
+                  ? "http://localhost:11434/v1" 
+                  : aiConfig.provider === 'openrouter'
+                    ? "https://openrouter.ai/api/v1"
+                    : "https://api.openai.com/v1"
+              }
               style={{ 
                 width: '100%', 
                 padding: '0.5rem', 
@@ -232,7 +359,13 @@ const Settings: React.FC = () => {
               name="model"
               value={currentConfig.model || ''}
               onChange={handleAiConfigChange}
-              placeholder={aiConfig.provider === 'ollama' ? "llama3" : "gpt-3.5-turbo"}
+              placeholder={
+                aiConfig.provider === 'ollama' 
+                  ? "llama3" 
+                  : aiConfig.provider === 'openrouter'
+                    ? "openai/gpt-3.5-turbo"
+                    : "gpt-3.5-turbo"
+              }
               style={{ 
                 width: '100%', 
                 padding: '0.5rem', 

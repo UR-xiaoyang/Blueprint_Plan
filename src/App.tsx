@@ -188,6 +188,7 @@ const App: React.FC = memo(() => {
 
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [modifyingPlanId, setModifyingPlanId] = useState<string | null>(null);
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
@@ -245,17 +246,30 @@ const App: React.FC = memo(() => {
     [plans, selectedPlanId]
   );
 
+  const modifyingPlan = useMemo(
+    () => plans.find(plan => plan.id === modifyingPlanId) ?? null,
+    [plans, modifyingPlanId]
+  );
+
   const handleViewChange = useCallback((view: ViewType) => {
     // 切换页面时清除当前焦点，防止焦点卡死在之前的输入框上
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
     setCurrentView(view);
+    if (view !== 'ai-planning') {
+      setModifyingPlanId(null);
+    }
   }, []);
 
   const handlePlanSelect = useCallback((plan: Plan) => {
     setSelectedPlanId(plan.id);
     setCurrentView('tasks');
+  }, []);
+
+  const handleModifyWithAI = useCallback((plan: Plan) => {
+    setModifyingPlanId(plan.id);
+    setCurrentView('ai-planning');
   }, []);
 
   const handleAIPlanGenerated = useCallback(async (planData: Omit<Plan, 'id' | 'createdAt' | 'updatedAt' | 'progress'>) => {
@@ -286,6 +300,24 @@ const App: React.FC = memo(() => {
       }
     }
   }, [importData]);
+
+  const handleAIPlanUpdated = useCallback(async (updatedPlan: Plan) => {
+    try {
+      await updatePlan(updatedPlan);
+      setModifyingPlanId(null);
+      setCurrentView('plans');
+    } catch (error) {
+      console.error('更新计划失败:', error);
+      if (window.appDialog) {
+        await window.appDialog.alert('更新计划失败');
+      }
+    }
+  }, [updatePlan]);
+
+  const handleAICancel = useCallback(() => {
+    setModifyingPlanId(null);
+    setCurrentView('plans');
+  }, []);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => !prev);
@@ -335,6 +367,7 @@ const App: React.FC = memo(() => {
             deletePlan={deletePlan}
             exportData={exportData}
             importData={importData}
+            onModifyWithAI={handleModifyWithAI}
           />
         );
       case 'tasks':
@@ -349,7 +382,12 @@ const App: React.FC = memo(() => {
         );
       case 'ai-planning':
         return (
-          <AIPlanView onPlanGenerated={handleAIPlanGenerated} />
+          <AIPlanView 
+            onPlanGenerated={handleAIPlanGenerated} 
+            initialPlan={modifyingPlan}
+            onPlanUpdated={handleAIPlanUpdated}
+            onCancel={handleAICancel}
+          />
         );
       case 'settings':
         return <Settings />;

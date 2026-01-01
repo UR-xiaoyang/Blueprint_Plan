@@ -21,6 +21,7 @@ interface AIPlanState {
   addChatMessage: (role: 'user' | 'assistant', content: string) => void;
   toggleChatHistory: () => void;
   reset: () => void;
+  initializeWithPlan: (plan: Plan) => void;
 }
 
 export interface ChatMessage {
@@ -68,6 +69,26 @@ export const useAIPlanStore = create<AIPlanState>((set) => ({
     step: 'input',
     request: DEFAULT_REQUEST,
     generatedPlan: null,
+    chatInput: '',
+    isModifying: false,
+    chatHistory: [],
+    showChatHistory: false
+  }),
+  initializeWithPlan: (plan) => set({
+    step: 'preview',
+    request: {
+      goal: plan.title, // Use title as goal for context
+      duration: 'custom',
+      intensity: 'medium'
+    },
+    generatedPlan: {
+      title: plan.title,
+      description: plan.description,
+      tasks: plan.tasks,
+      startDate: plan.startDate,
+      endDate: plan.endDate,
+      status: plan.status
+    },
     chatInput: '',
     isModifying: false,
     chatHistory: [],

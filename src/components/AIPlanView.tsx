@@ -6,10 +6,18 @@ import { Plan } from '../App';
 import '../styles/components.css';
 
 interface AIPlanViewProps {
+  initialPlan?: Plan | null;
   onPlanGenerated: (plan: Omit<Plan, 'id' | 'createdAt' | 'updatedAt' | 'progress'>) => void;
+  onPlanUpdated?: (plan: Plan) => void;
+  onCancel?: () => void;
 }
 
-const AIPlanView: FC<AIPlanViewProps> = ({ onPlanGenerated }) => {
+const AIPlanView: FC<AIPlanViewProps> = ({ 
+  initialPlan, 
+  onPlanGenerated, 
+  onPlanUpdated, 
+  onCancel 
+}) => {
   const { 
     step, setStep, 
     request, setRequest, 
@@ -17,8 +25,15 @@ const AIPlanView: FC<AIPlanViewProps> = ({ onPlanGenerated }) => {
     chatInput, setChatInput,
     isModifying, setIsModifying,
     chatHistory, showChatHistory, toggleChatHistory, addChatMessage,
-    reset
+    reset,
+    initializeWithPlan
   } = useAIPlanStore();
+
+  React.useEffect(() => {
+    if (initialPlan) {
+      initializeWithPlan(initialPlan);
+    }
+  }, [initialPlan, initializeWithPlan]);
 
   const [streamingText, setStreamingText] = React.useState('');
   const presetDurations = ['1 week', '2 weeks', '1 month', '3 months', '6 months'] as const;
@@ -131,12 +146,30 @@ const AIPlanView: FC<AIPlanViewProps> = ({ onPlanGenerated }) => {
 
   const handleConfirm = async () => {
     if (generatedPlan) {
-      onPlanGenerated(generatedPlan);
+      if (initialPlan && onPlanUpdated) {
+        // Update existing plan
+        onPlanUpdated({
+          ...initialPlan,
+          title: generatedPlan.title,
+          description: generatedPlan.description,
+          tasks: generatedPlan.tasks,
+          startDate: generatedPlan.startDate,
+          endDate: generatedPlan.endDate,
+          // Keep other fields like id, createdAt, progress (or maybe progress should be reset? No, keep it)
+          updatedAt: new Date().toISOString()
+        });
+         if (window.appDialog) {
+          await window.appDialog.alert('计划已成功更新！');
+        }
+      } else {
+        // Create new plan
+        onPlanGenerated(generatedPlan);
+        if (window.appDialog) {
+          await window.appDialog.alert('计划已成功生成并添加到您的计划列表中！');
+        }
+      }
       // Reset after success
       reset();
-      if (window.appDialog) {
-        await window.appDialog.alert('计划已成功生成并添加到您的计划列表中！');
-      }
     }
   };
 
@@ -395,11 +428,18 @@ const AIPlanView: FC<AIPlanViewProps> = ({ onPlanGenerated }) => {
                   <button className="btn btn-secondary btn-lg" onClick={handleRegenerate}>
                     <RefreshCw size={16} /> 重新生成
                   </button>
-                  <button className="btn btn-secondary btn-lg" onClick={() => setStep('input')}>
-                     返回修改
+                  <button className="btn btn-secondary btn-lg" onClick={() => {
+                    if (initialPlan && onCancel) {
+                      onCancel();
+                      reset();
+                    } else {
+                      setStep('input');
+                    }
+                  }}>
+                     {initialPlan ? '取消修改' : '返回修改'}
                   </button>
                   <button className="btn btn-primary btn-lg" onClick={handleConfirm}>
-                    <Check size={20} /> 确认创建
+                    <Check size={20} /> {initialPlan ? '保存修改' : '确认创建'}
                   </button>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
-import { Plus, Download, Upload, FileJson, Calendar, Trash2, Edit2, ArrowRight } from 'lucide-react';
+import { Plus, Download, Upload, FileJson, Calendar, Trash2, Edit2, ArrowRight, Sparkles } from 'lucide-react';
 // import AIPlanGenerator from './AIPlanGenerator'; // Removed as per user request to move to separate view
 
 // Plan interface definition
@@ -24,6 +24,7 @@ interface PlanManagerProps {
   deletePlan: (planId: string) => Promise<void>;
   exportData?: () => Promise<void>;
   importData?: (jsonData: string) => Promise<void>;
+  onModifyWithAI?: (plan: Plan) => void;
 }
 
 interface PlanFormProps {
@@ -135,6 +136,7 @@ const PlanForm: FC<PlanFormProps> = memo(({
 interface PlanCardProps {
   plan: Plan;
   onEdit: (plan: Plan) => void;
+  onModifyWithAI?: (plan: Plan) => void;
   onDelete: (planId: string) => void;
   onSelect: (plan: Plan) => void;
   getStatusColor: (status: Plan['status']) => string;
@@ -144,6 +146,7 @@ interface PlanCardProps {
 const PlanCard: FC<PlanCardProps> = memo(({ 
   plan, 
   onEdit, 
+  onModifyWithAI,
   onDelete, 
   onSelect, 
   getStatusColor, 
@@ -197,6 +200,16 @@ const PlanCard: FC<PlanCardProps> = memo(({
             {getStatusText(plan.status)}
         </span>
         <div className="plan-card-actions">
+          {onModifyWithAI && (
+            <button 
+              className="btn-icon" 
+              onClick={(e) => { e.stopPropagation(); onModifyWithAI(plan); }} 
+              title="AI 智能修改"
+              style={{ color: 'var(--accent-color)' }}
+            >
+              <Sparkles size={16} />
+            </button>
+          )}
           <button className="btn-icon" onClick={handleEdit} title="编辑"><Edit2 size={16} /></button>
           <button className="btn-icon" onClick={handleDelete} title="删除"><Trash2 size={16} /></button>
         </div>
@@ -212,7 +225,8 @@ const PlanManager: FC<PlanManagerProps> = memo(({
   updatePlan, 
   deletePlan,
   exportData,
-  importData
+  importData,
+  onModifyWithAI
 }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   // const [showAIGenerator, setShowAIGenerator] = useState(false); // Removed
@@ -495,8 +509,9 @@ const PlanManager: FC<PlanManagerProps> = memo(({
               key={plan.id}
               plan={plan}
               onEdit={handleEdit}
-              onDelete={handleDelete}
-              onSelect={onPlanSelect}
+            onModifyWithAI={onModifyWithAI}
+            onDelete={handleDelete}
+            onSelect={onPlanSelect}
               getStatusColor={getStatusColor}
               getStatusText={getStatusText}
             />

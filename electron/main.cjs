@@ -81,13 +81,46 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // Register F12 to open DevTools
-  globalShortcut.register('F12', () => {
-    const win = BrowserWindow.getFocusedWindow();
-    if (win) {
-      win.webContents.toggleDevTools();
+  // Function to register global shortcuts
+  const registerShortcuts = () => {
+    // Unregister all shortcuts first to avoid duplicates
+    globalShortcut.unregisterAll();
+
+    // Register F12 to open DevTools
+    globalShortcut.register('F12', () => {
+      const win = BrowserWindow.getFocusedWindow();
+      if (win) {
+        win.webContents.toggleDevTools();
+      }
+    });
+
+    // Get settings to find custom shortcut
+    const settings = api.getSettings();
+    const shortcutKey = settings.globalShortcut || 'Alt+A';
+
+    // Register global shortcut to show/hide window
+    try {
+      globalShortcut.register(shortcutKey, () => {
+        // 如果窗口不存在或已销毁（例如在 macOS 上关闭了窗口），则重新创建
+        if (!mainWindow || mainWindow.isDestroyed()) {
+          createWindow();
+          return;
+        }
+
+        if (mainWindow.isMinimized()) {
+          mainWindow.restore();
+        }
+        if (!mainWindow.isVisible()) {
+          mainWindow.show();
+        }
+        mainWindow.focus();
+      });
+    } catch (e) {
+      console.error(`Failed to register shortcut ${shortcutKey}:`, e);
     }
-  });
+  };
+
+  registerShortcuts();
 
   // Set up IPC handlers
   ipcMain.handle('getAllPlans', async () => {
@@ -133,6 +166,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('saveSettings', async (event, settings) => {
     const ok = api.saveSettings(settings);
+    // Reload shortcuts when settings change
+    if (ok) {
+      registerShortcuts();
+    }
     return ok;
   });
 
