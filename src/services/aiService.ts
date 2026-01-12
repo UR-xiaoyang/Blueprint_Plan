@@ -163,6 +163,27 @@ export const aiService = {
   },
 
   /**
+   * 获取模型列表
+   */
+  fetchModels: async (provider: string): Promise<{id: string, name: string}[]> => {
+    if (provider === 'openrouter') {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/models');
+        if (!response.ok) return [];
+        const data = await response.json();
+        if (data && Array.isArray(data.data)) {
+          return data.data.map((m: any) => ({ id: m.id, name: m.name || m.id }));
+        }
+        return [];
+      } catch (e) {
+        console.error('Fetch models failed', e);
+        return [];
+      }
+    }
+    return [];
+  },
+
+  /**
    * 生成计划
    */
   generatePlan: async (request: AIPlanRequest, onStream?: (content: string) => void): Promise<Omit<Plan, 'id' | 'createdAt' | 'updatedAt' | 'progress'>> => {

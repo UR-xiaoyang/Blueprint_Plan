@@ -184,7 +184,8 @@
     flex-direction: column;
     transform: none;
     transition: none;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: 0.5rem !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 1.25rem);
     box-shadow: var(--shadow-xl);
   }
 
@@ -203,7 +204,7 @@
     flex-direction: row;
     justify-content: space-around;
     width: 100%;
-    padding: 0.75rem 0.5rem;
+    padding: 0 0.5rem;
     overflow-x: auto;
     flex: 0 0 auto !important;
     align-items: center;
@@ -345,8 +346,8 @@
   .main-content {
     margin-left: 0 !important;
     padding: 1rem;
-    /* 预留底部空间，避免被底部导航遮挡，考虑 Android 手势栏安全区 */
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+    /* 预留底部空间，避免被底部导航遮挡，增加足够的余量 */
+    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 100px) !important;
   }
   
   .app-header {

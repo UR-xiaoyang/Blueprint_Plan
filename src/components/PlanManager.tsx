@@ -1,8 +1,11 @@
 import { useState, memo, useCallback, useMemo, useRef, FC } from 'react';
-import { Plus, Download, Upload, FileJson, Calendar, Trash2, Edit2, ArrowRight, Sparkles } from 'lucide-react';
+import { Plus, Download, Upload, FileJson, Calendar, Trash2, Edit2, ArrowRight, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 // import AIPlanGenerator from './AIPlanGenerator'; // Removed as per user request to move to separate view
 
-// Plan interface definition
+import TaskManager from './TaskManager';
+  import { usePlanManager } from '../hooks/usePlanManager';
+  
+  // Plan interface definition
 interface Plan {
   id: string;
   title: string;
@@ -25,6 +28,11 @@ interface PlanManagerProps {
   exportData?: () => Promise<void>;
   importData?: (jsonData: string) => Promise<void>;
   onModifyWithAI?: (plan: Plan) => void;
+  // Added for merged view
+  createTask?: (planId: string, task: any) => Promise<void>;
+  updateTask?: (task: any) => Promise<void>;
+  deleteTask?: (planId: string, taskId: string) => Promise<void>;
+  addTaskLog?: (taskId: string, content: string) => Promise<void>;
 }
 
 interface PlanFormProps {
@@ -141,6 +149,7 @@ interface PlanCardProps {
   onSelect: (plan: Plan) => void;
   getStatusColor: (status: Plan['status']) => string;
   getStatusText: (status: Plan['status']) => string;
+  isExpanded?: boolean;
 }
 
 const PlanCard: FC<PlanCardProps> = memo(({ 
@@ -150,7 +159,8 @@ const PlanCard: FC<PlanCardProps> = memo(({
   onDelete, 
   onSelect, 
   getStatusColor, 
-  getStatusText 
+  getStatusText,
+  isExpanded
 }) => {
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -172,10 +182,13 @@ const PlanCard: FC<PlanCardProps> = memo(({
   }), [plan.startDate, plan.endDate]);
 
   return (
-    <div className={`plan-card-item ${getStatusColor(plan.status)}`} onClick={handleSelect}>
+    <div className={`plan-card-item ${getStatusColor(plan.status)} ${isExpanded ? 'expanded' : ''}`} onClick={handleSelect}>
       <div className="plan-card-main">
         <div className="plan-card-header">
-          <h4 className="plan-card-title">{plan.title}</h4>
+          <h4 className="plan-card-title">
+            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {plan.title}
+          </h4>
         </div>
         <p className="plan-card-description">{plan.description}</p>
         <div className="plan-dates" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -226,11 +239,22 @@ const PlanManager: FC<PlanManagerProps> = memo(({
   deletePlan,
   exportData,
   importData,
-  onModifyWithAI
+  onModifyWithAI,
+  createTask,
+  updateTask,
+  deleteTask,
+  addTaskLog
 }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   // const [showAIGenerator, setShowAIGenerator] = useState(false); // Removed
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
+
+  const handlePlanClick = useCallback((plan: Plan) => {
+    setExpandedPlanId(prev => prev === plan.id ? null : plan.id);
+    onPlanSelect(plan);
+  }, [onPlanSelect]);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -505,16 +529,29 @@ const PlanManager: FC<PlanManagerProps> = memo(({
       {plans.length > 0 && (
         <div className="plan-list-container">
           {sortedPlans.map(plan => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              onEdit={handleEdit}
-            onModifyWithAI={onModifyWithAI}
-            onDelete={handleDelete}
-            onSelect={onPlanSelect}
-              getStatusColor={getStatusColor}
-              getStatusText={getStatusText}
-            />
+            <div key={plan.id} className="plan-item-wrapper">
+              <PlanCard
+                plan={plan}
+                onEdit={handleEdit}
+                onModifyWithAI={onModifyWithAI}
+                onDelete={handleDelete}
+                onSelect={handlePlanClick}
+                getStatusColor={getStatusColor}
+                getStatusText={getStatusText}
+                isExpanded={expandedPlanId === plan.id}
+              />
+              {expandedPlanId === plan.id && createTask && updateTask && deleteTask && addTaskLog && (
+                <div className="plan-tasks-container">
+                  <TaskManager
+                    selectedPlan={plan}
+                    createTask={createTask}
+                    updateTask={updateTask}
+                    deleteTask={deleteTask}
+                    addTaskLog={addTaskLog}
+                  />
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

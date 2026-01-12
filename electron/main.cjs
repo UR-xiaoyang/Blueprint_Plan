@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, dialog, Tray, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -22,6 +22,67 @@ app.disableHardwareAcceleration();
 const api = require('./backend.cjs');
 
 let mainWindow; // Keep a reference to the main window
+let tray = null;
+let isQuitting = false; // Flag to indicate if we are really quitting
+
+function createTray() {
+  if (tray) return;
+
+  const iconPath = path.join(__dirname, '../src/assets/react.svg'); // Use a valid icon path, ensure it exists or use default
+  // Note: tray icon usually requires .ico on Windows, .png on Mac/Linux. 
+  
+  // Determine icon path based on environment
+  let trayIconPath;
+  if (app.isPackaged) {
+    // In production, resources are in resourcesPath or dist
+    trayIconPath = path.join(__dirname, '../dist/icon.png');
+  } else {
+    // In development
+    trayIconPath = path.join(__dirname, '../public/icon.png');
+  }
+
+  // Fallback if png doesn't exist (though we just copied it)
+  if (!fs.existsSync(trayIconPath)) {
+    console.warn('Tray icon not found at:', trayIconPath);
+    // Try svg as last resort
+    trayIconPath = app.isPackaged 
+      ? path.join(__dirname, '../dist/vite.svg')
+      : path.join(__dirname, '../public/vite.svg');
+  }
+  
+  try {
+    tray = new Tray(trayIconPath);
+    const contextMenu = Menu.buildFromTemplate([
+      { 
+        label: '显示主界面', 
+        click: () => {
+          if (mainWindow) {
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        } 
+      },
+      { 
+        label: '退出', 
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        } 
+      }
+    ]);
+    tray.setToolTip('计划委员会');
+    tray.setContextMenu(contextMenu);
+    
+    tray.on('double-click', () => {
+       if (mainWindow) {
+         mainWindow.show();
+         mainWindow.focus();
+       }
+    });
+  } catch (e) {
+    console.error("Failed to create tray:", e);
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -38,6 +99,31 @@ function createWindow() {
   });
 
   mainWindow.setMenu(null);
+
+  // Handle external links
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http:') || url.startsWith('https:')) {
+      shell.openExternal(url);
+      return { action: 'deny' };
+    }
+    return { action: 'allow' };
+  });
+
+  // Handle close event to minimize to tray if enabled
+  mainWindow.on('close', (event) => {
+    if (isQuitting) return;
+
+    const settings = api.getSettings();
+    if (settings.closeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+      return false;
+    }
+    // If not close to tray, let it close naturally.
+    // However, if we want to keep running in background?
+    // User said "add ability to run in background, settable in settings".
+    // Usually this means "Close to Tray".
+  });
 
   const loadDevServer = (url, retries = 5) => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -59,6 +145,9 @@ function createWindow() {
   // Load the Vite development server URL or the built HTML file
   const devServerURL = 'http://localhost:8079'; // Vite dev server port
   const buildPath = path.join(__dirname, '../dist/index.html');
+  
+  // Create Tray
+  createTray();
 
   // Use app.isPackaged to determine if in development or production
   if (!app.isPackaged) {
@@ -77,6 +166,118 @@ function createWindow() {
     mainWindow.loadFile(buildPath);
   }
 }
+
+// Add IPC handler for opening external links manually if needed
+ipcMain.handle('open-external', async (event, url) => {
+  await shell.openExternal(url);
+});
+
+// Extension/DLC Management
+ipcMain.handle('loadExtensions', async () => {
+  const extensionsPath = path.join(app.getPath('userData'), 'extensions');
+  try {
+    // Ensure extensions directory exists
+    await fs.promises.mkdir(extensionsPath, { recursive: true });
+    
+    const entries = await fs.promises.readdir(extensionsPath, { withFileTypes: true });
+    const extensions = [];
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const extPath = path.join(extensionsPath, entry.name);
+        const manifestPath = path.join(extPath, 'manifest.json');
+        
+        if (fs.existsSync(manifestPath)) {
+          try {
+            const manifestContent = await fs.promises.readFile(manifestPath, 'utf-8');
+            const manifest = JSON.parse(manifestContent);
+            
+            // Read entry script if exists
+            let scriptContent = '';
+            let scriptPath = '';
+            
+            if (manifest.main) {
+                scriptPath = path.join(extPath, manifest.main);
+            } else if (fs.existsSync(path.join(extPath, 'index.js'))) {
+                scriptPath = path.join(extPath, 'index.js');
+            }
+
+            if (scriptPath && fs.existsSync(scriptPath)) {
+                scriptContent = await fs.promises.readFile(scriptPath, 'utf-8');
+            }
+
+            extensions.push({
+              id: entry.name,
+              ...manifest,
+              script: scriptContent,
+              path: extPath
+            });
+          } catch (e) {
+            console.error(`Failed to load extension ${entry.name}:`, e);
+          }
+        }
+      }
+    }
+    return extensions;
+  } catch (error) {
+    console.error('Error loading extensions:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('openExtensionsFolder', async () => {
+    const extensionsPath = path.join(app.getPath('userData'), 'extensions');
+    await fs.promises.mkdir(extensionsPath, { recursive: true });
+    shell.openPath(extensionsPath);
+});
+
+ipcMain.handle('createSampleExtension', async () => {
+    const extensionsPath = path.join(app.getPath('userData'), 'extensions');
+    const samplePath = path.join(extensionsPath, 'sample-dlc');
+    
+    try {
+        await fs.promises.mkdir(samplePath, { recursive: true });
+        
+        const manifest = {
+            name: "Sample Extension",
+            version: "1.0.0",
+            description: "A sample extension to demonstrate capabilities",
+            main: "index.js"
+        };
+        
+        const script = `
+// Sample Extension Script
+context.log("Sample Extension Loaded!");
+
+// Example: Create a new plan automatically
+// Uncomment to test:
+/*
+context.api.createPlan({
+    title: "Created by DLC",
+    description: "This plan was created by an extension!",
+    startDate: new Date().toISOString(),
+    endDate: new Date(Date.now() + 86400000).toISOString(),
+    status: "planning"
+}).then(plan => {
+    context.showMessage("Successfully created a plan: " + plan.title);
+});
+*/
+
+// Register an action (can be triggered by future UI updates)
+context.registerAction("sayHello", () => {
+    context.showMessage("Hello from Sample Extension!");
+});
+`;
+
+        await fs.promises.writeFile(path.join(samplePath, 'manifest.json'), JSON.stringify(manifest, null, 2));
+        await fs.promises.writeFile(path.join(samplePath, 'index.js'), script);
+        
+        return true;
+    } catch (e) {
+        console.error("Failed to create sample extension:", e);
+        return false;
+    }
+});
 
 app.whenReady().then(() => {
   createWindow();

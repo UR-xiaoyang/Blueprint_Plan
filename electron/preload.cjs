@@ -22,6 +22,10 @@ const validInvokeChannels = [
   'window-minimize',
   'window-maximize',
   'window-close',
+  'open-external', // Added for opening external links
+  'loadExtensions',
+  'openExtensionsFolder',
+  'createSampleExtension',
 ];
 
 const validSendChannels = [];

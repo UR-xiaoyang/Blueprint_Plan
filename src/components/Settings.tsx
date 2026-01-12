@@ -2,18 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import { useDebugMode } from '../hooks/useDebugMode';
 import { aiService, AIConfig } from '../services/aiService';
+import { RefreshCw, Moon, Palette, Keyboard, Cpu, ShieldAlert, Info, Settings as SettingsIcon } from 'lucide-react';
 
-const Settings: React.FC = () => {
+interface SettingsProps {
+  showExtensions?: boolean;
+  onShowExtensionsChange?: (show: boolean) => void;
+}
+
+const Settings: React.FC<SettingsProps> = ({ showExtensions = false, onShowExtensionsChange }) => {
   const { themeMode, setThemeMode, schedule, setSchedule } = useTheme();
   const { debugMode, setDebugMode } = useDebugMode();
   const [realAppVersion, setRealAppVersion] = useState('');
-  const [showProgramInfo, setShowProgramInfo] = useState(false);
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const [globalShortcut, setGlobalShortcut] = useState('');
+  const [closeToTray, setCloseToTray] = useState(false);
   
   // AI Config State
   const [aiConfig, setAiConfig] = useState<AIConfig>(aiService.getConfig());
+  const [availableModels, setAvailableModels] = useState<{id: string, name: string}[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+
+  const fetchModelList = async () => {
+    setIsLoadingModels(true);
+    try {
+      const models = await aiService.fetchModels(aiConfig.provider);
+      setAvailableModels(models);
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
 
   const handleThemeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newTheme = event.target.value as 'light' | 'dark' | 'auto';
@@ -151,7 +169,7 @@ const Settings: React.FC = () => {
     })();
   };
 
-  // 初始化加载其他设置（调试模式、快捷键）
+  // 初始化加载其他设置（调试模式、快捷键、托盘）
   useEffect(() => {
     (async () => {
       if (window.ipcRenderer) {
@@ -163,6 +181,9 @@ const Settings: React.FC = () => {
           setGlobalShortcut(settings.globalShortcut);
         } else {
           setGlobalShortcut('Alt+A'); // Default
+        }
+        if (typeof settings.closeToTray === 'boolean') {
+          setCloseToTray(settings.closeToTray);
         }
       }
     })();
@@ -182,11 +203,25 @@ const Settings: React.FC = () => {
     })();
   }, []);
 
+  const handleCloseToTrayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = event.target.checked;
+    setCloseToTray(enabled);
+    (async () => {
+      if (window.ipcRenderer) {
+        const current = await window.ipcRenderer.invoke('getSettings');
+        await window.ipcRenderer.invoke('saveSettings', { ...current, closeToTray: enabled });
+      }
+    })();
+  };
+
   return (
     <div className="settings-view">
       
       <div className="setting-section">
-        <h3>夜间模式</h3>
+        <h3>
+          <Palette size={20} />
+          外观设置
+        </h3>
         <div className="setting-option">
           <label>
             <input 
@@ -248,8 +283,28 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="setting-section">
-        <h3>全局快捷键</h3>
-        <p className="setting-description" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+        <h3>
+          <SettingsIcon size={20} />
+          常规设置
+        </h3>
+        <div className="setting-option">
+          <label>
+            <input 
+              type="checkbox" 
+              checked={closeToTray} 
+              onChange={handleCloseToTrayChange} 
+            />
+            关闭主面板时最小化到系统托盘（后台运行）
+          </label>
+        </div>
+      </div>
+
+      <div className="setting-section">
+        <h3>
+          <Keyboard size={20} />
+          全局快捷键
+        </h3>
+        <p className="setting-description" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
           点击输入框并按下键盘组合键来设置唤醒/隐藏应用的快捷键。
         </p>
         <div className="setting-option" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -325,6 +380,18 @@ const Settings: React.FC = () => {
                 color: 'var(--text-primary)'
               }}
             />
+            {aiConfig.provider === 'openrouter' && (
+              <div style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+                <a 
+                  href="https://openrouter.ai/settings/keys" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  style={{ color: 'var(--primary-color)', textDecoration: 'none' }}
+                >
+                  获取 OpenRouter API Key &rarr;
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="form-group" style={{ marginBottom: '1rem' }}>
@@ -353,12 +420,37 @@ const Settings: React.FC = () => {
           </div>
 
           <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>模型名称 (可选)</label>
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontWeight: 500 }}>
+              <span>模型名称 (可选)</span>
+              {aiConfig.provider === 'openrouter' && (
+                <button 
+                  onClick={fetchModelList}
+                  disabled={isLoadingModels}
+                  style={{ 
+                    fontSize: '0.8rem', 
+                    padding: '4px 8px', 
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    cursor: 'pointer',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '4px',
+                    background: 'var(--surface-color)',
+                    color: 'var(--text-primary)'
+                  }}
+                  title="获取在线模型列表"
+                >
+                  <RefreshCw size={12} className={isLoadingModels ? "spin" : ""} />
+                  {isLoadingModels ? '获取中...' : '获取列表'}
+                </button>
+              )}
+            </label>
             <input
               type="text"
               name="model"
               value={currentConfig.model || ''}
               onChange={handleAiConfigChange}
+              list={aiConfig.provider === 'openrouter' ? "model-list" : undefined}
               placeholder={
                 aiConfig.provider === 'ollama' 
                   ? "llama3" 
@@ -375,6 +467,13 @@ const Settings: React.FC = () => {
                 color: 'var(--text-primary)'
               }}
             />
+            {aiConfig.provider === 'openrouter' && (
+              <datalist id="model-list">
+                {availableModels.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </datalist>
+            )}
           </div>
         </>
         
@@ -388,66 +487,60 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="setting-section">
-        <h3>其他设置</h3>
+        <h3>
+          <ShieldAlert size={20} />
+          高级设置
+        </h3>
         <div className="setting-item">
-          <label htmlFor="debug-mode">
+          <label>启用 DLC 扩展功能</label>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={showExtensions}
+              onChange={(e) => onShowExtensionsChange?.(e.target.checked)}
+            />
+            <span className="slider round"></span>
+          </label>
+        </div>
+        <div className="setting-item">
+          <label htmlFor="debug-mode">开启调试模式</label>
+          <label className="switch">
             <input
               type="checkbox"
               id="debug-mode"
               checked={debugMode}
               onChange={handleDebugModeChange}
             />
-            开启调试模式
+            <span className="slider round"></span>
           </label>
         </div>
       </div>
 
       <div className="setting-section">
-        <h3>程序信息</h3>
-        <button onClick={async () => {
-          try {
-            if (window.electron && typeof window.electron.getAppVersion === 'function') {
-              const r = await window.electron.getAppVersion();
-              if (r && r.ok && r.version) {
-                setRealAppVersion(String(r.version));
-              }
-            }
-          } catch (_) {}
-          setShowProgramInfo(true);
-        }}>查看程序信息</button>
-        {showProgramInfo && (
-          <div className="program-info-modal" style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}>
-            <div style={{
-              background: '#fff',
-              padding: '16px 20px',
-              borderRadius: 8,
-              width: 'min(520px, 90vw)',
-              boxShadow: '0 10px 24px rgba(0,0,0,0.2)'
-            }}>
-              <h4 style={{ marginTop: 0 }}>Blueprint Plan 程序信息</h4>
-              <div style={{ lineHeight: 1.8 }}>
-                <div><strong>程序名称：</strong>Blueprint Plan</div>
-                <div><strong>版本：</strong>{realAppVersion || '未知'}</div>
-                <div><strong>调试模式：</strong>{debugMode ? '开启' : '关闭'}</div>
-                <div><strong>运行环境：</strong>{navigator.userAgent}</div>
-              </div>
-              <div style={{ marginTop: 12, textAlign: 'right' }}>
-                <button onClick={() => setShowProgramInfo(false)}>关闭</button>
-              </div>
-            </div>
+        <h3>
+          <Info size={20} />
+          程序信息
+        </h3>
+        <div className="program-info-content">
+          <div className="setting-item">
+            <label>程序名称</label>
+            <span>Blueprint Plan</span>
           </div>
-        )}
+          <div className="setting-item">
+            <label>版本</label>
+            <span>{realAppVersion || '未知'}</span>
+          </div>
+          <div className="setting-item">
+            <label>调试模式</label>
+            <span>{debugMode ? '开启' : '关闭'}</span>
+          </div>
+          <div className="setting-item" style={{alignItems: 'flex-start'}}>
+            <label style={{whiteSpace: 'nowrap'}}>运行环境</label>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'right', wordBreak: 'break-all', maxWidth: '60%' }}>
+              {navigator.userAgent}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

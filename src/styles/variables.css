@@ -69,6 +69,10 @@
   --in-progress-border: #fed7aa;
   --status-in-progress-badge-bg: #fed7aa;
   --status-in-progress-badge-text: #8a3800;
+  
+  /* Sidebar Specific */
+  --sidebar-background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
+  --sidebar-border: rgba(226, 232, 240, 0.6);
 }
 
 :root.dark-mode {
@@ -119,6 +123,10 @@
   --in-progress-border: #d97706;
   --status-in-progress-badge-bg: #8a3800;
   --status-in-progress-badge-text: #fed7aa;
+  
+  /* Sidebar Specific Dark */
+  --sidebar-background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  --sidebar-border: rgba(71, 85, 105, 0.6);
   
   /* 字体排版系统 */
   --font-size-xs: 0.75rem;

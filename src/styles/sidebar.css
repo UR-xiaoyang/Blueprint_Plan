@@ -5,16 +5,16 @@
   /* left: 0; */
   width: 280px;
   height: 100%; /* 修复: 使用视口高度，确保撑满屏幕 */
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
+  background: var(--sidebar-background) !important;
   backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(20px); /* 兼容 iOS 和部分 Android */
+  border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 10;
   flex-shrink: 0; /* 修复: 防止侧边栏被压缩 */
+  padding-top: env(safe-area-inset-top); /* 适配沉浸式状态栏 */
 }
 
 .sidebar.collapsed {
