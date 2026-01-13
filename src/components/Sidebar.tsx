@@ -1,7 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { LayoutDashboard, ClipboardList, CheckSquare, Settings, ChevronLeft, ChevronRight, Sparkles, Package } from 'lucide-react';
-
-type ViewType = 'dashboard' | 'plans' | 'tasks' | 'settings' | 'ai-planning' | 'extensions';
+import { ViewType } from '../types';
 
 interface SidebarProps {
   currentView: ViewType;
