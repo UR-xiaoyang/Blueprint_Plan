@@ -255,6 +255,7 @@ async function modifyPlanWithLLM(
       description: plan.description ?? '',
       tasks: Array.isArray(plan.tasks)
         ? plan.tasks.map(t => ({
+            id: t?.id ?? '', // Include ID in comparison
             title: t?.title ?? '',
             description: t?.description ?? '',
             startDate: t?.startDate ?? '',
@@ -273,6 +274,7 @@ ${JSON.stringify({
   title: currentPlan.title,
   description: currentPlan.description,
   tasks: currentPlan.tasks.map(t => ({
+    id: t.id, // Include ID
     title: t.title,
     description: t.description,
     startDate: t.startDate,
@@ -287,7 +289,11 @@ ${JSON.stringify({
 1. 仅返回合法的 JSON 字符串，不要包含 Markdown 代码块标记（如 \`\`\`json）。
 2. 不要包含任何解释性文字。
 3. JSON 结构必须包含: title (字符串), description (字符串), tasks (数组)。
-4. tasks 数组中的每个对象必须包含: title, description, startDate (YYYY-MM-DD), dueDate (YYYY-MM-DD)。
+4. tasks 数组中的每个对象必须包含: id (字符串), title, description, startDate (YYYY-MM-DD), dueDate (YYYY-MM-DD)。
+   - **修改任务时**：必须保留原任务的 id 字段值，直接修改 title/description/date 等内容。
+   - **新增任务时**：id 字段必须设为 null。
+   - **删除任务时**：直接从 tasks 数组中移除该对象。
+   - **严禁**：不要为了修改一个任务而创建一个新任务（id: null）并同时保留旧任务。
 5. 请确保根据用户的指令修改了相应的内容。
 6. 如果指令较抽象，请至少改动 description 或某个 task.description 来体现修改结果。
 7. 返回的 JSON 必须与“当前计划 JSON”不同，不能原样照抄。
@@ -339,6 +345,7 @@ ${JSON.stringify({
     title: currentPlan.title,
     description: currentPlan.description,
     tasks: currentPlan.tasks.map(t => ({
+      id: t.id,
       title: t.title,
       description: t.description,
       startDate: t.startDate,
@@ -378,6 +385,7 @@ ${JSON.stringify({
             ? planData.description
             : `${currentPlan.description}\n\n已应用修改指令：${instruction}`,
         tasks: Array.isArray(planData.tasks) ? planData.tasks : currentPlan.tasks.map(t => ({
+          id: t.id,
           title: t.title,
           description: t.description,
           startDate: t.startDate,
@@ -402,19 +410,36 @@ ${JSON.stringify({
   const filteredTasks = rawTasks.filter((t: any) => !isStageHeadingTitle(t?.title));
 
   const finalTasks: Task[] = filteredTasks.map((t: any) => {
-    return {
-      id: generateUUID(), // 简化处理，重新生成 ID
-      planId: '',
-      title: t.title || '未命名任务',
-      description: t.description || '',
-      status: 'todo',
-      priority: 'medium',
-      startDate: t.startDate,
-      dueDate: t.dueDate,
-      logs: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    // Try to find existing task by ID
+    const taskId = t.id ? String(t.id).trim() : null;
+    const isValidId = taskId && taskId.toLowerCase() !== 'null' && taskId.toLowerCase() !== 'undefined';
+    
+    const existingTask = isValidId ? currentPlan.tasks.find(ct => ct.id === taskId) : undefined;
+
+    if (existingTask) {
+      return {
+        ...existingTask,
+        title: t.title || existingTask.title,
+        description: t.description || existingTask.description,
+        startDate: t.startDate || existingTask.startDate,
+        dueDate: t.dueDate || existingTask.dueDate,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      return {
+        id: generateUUID(),
+        planId: '',
+        title: t.title || '未命名任务',
+        description: t.description || '',
+        status: 'todo',
+        priority: 'medium',
+        startDate: t.startDate,
+        dueDate: t.dueDate,
+        logs: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
   });
 
   return {

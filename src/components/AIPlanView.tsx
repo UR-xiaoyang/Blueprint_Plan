@@ -144,20 +144,53 @@ const AIPlanView: FC<AIPlanViewProps> = ({
     }
   };
 
+  const updateTask = (index: number, updates: Partial<Plan['tasks'][0]>) => {
+    if (generatedPlan) {
+      const newTasks = [...generatedPlan.tasks];
+      const oldTask = newTasks[index];
+
+      // 如果修改了开始日期，尝试保持任务时长不变，自动更新截止日期
+      if (updates.startDate && oldTask.startDate && oldTask.dueDate) {
+        try {
+          const oldStart = new Date(oldTask.startDate);
+          const oldDue = new Date(oldTask.dueDate);
+          // 计算毫秒差值
+          const durationMs = oldDue.getTime() - oldStart.getTime();
+          
+          const newStart = new Date(updates.startDate);
+          if (!isNaN(newStart.getTime()) && !isNaN(durationMs)) {
+            const newDue = new Date(newStart.getTime() + durationMs);
+            updates.dueDate = newDue.toISOString().split('T')[0];
+          }
+        } catch (e) {
+          console.error('Date update calculation failed', e);
+        }
+      }
+
+      newTasks[index] = { ...oldTask, ...updates };
+      setGeneratedPlan({ ...generatedPlan, tasks: newTasks });
+    }
+  };
+
   const handleConfirm = async () => {
     if (generatedPlan) {
       if (initialPlan && onPlanUpdated) {
         // Update existing plan
-        onPlanUpdated({
-          ...initialPlan,
-          title: generatedPlan.title,
-          description: generatedPlan.description,
-          tasks: generatedPlan.tasks,
-          startDate: generatedPlan.startDate,
-          endDate: generatedPlan.endDate,
-          // Keep other fields like id, createdAt, progress (or maybe progress should be reset? No, keep it)
-          updatedAt: new Date().toISOString()
-        });
+      const tasksWithPlanId = generatedPlan.tasks.map(t => ({
+        ...t,
+        planId: initialPlan.id
+      }));
+
+      onPlanUpdated({
+        ...initialPlan,
+        title: generatedPlan.title,
+        description: generatedPlan.description,
+        tasks: tasksWithPlanId,
+        startDate: generatedPlan.startDate,
+        endDate: generatedPlan.endDate,
+        // Keep other fields like id, createdAt, progress (or maybe progress should be reset? No, keep it)
+        updatedAt: new Date().toISOString()
+      });
          if (window.appDialog) {
           await window.appDialog.alert('计划已成功更新！');
         }
@@ -347,10 +380,22 @@ const AIPlanView: FC<AIPlanViewProps> = ({
                     <div key={idx} className="timeline-item">
                       <div className="timeline-marker"></div>
                       <div className="timeline-content">
-                        <div className="timeline-date">{task.startDate.slice(5)}</div>
+                        <div className="timeline-date">
+                          <input
+                            type="date"
+                            className="editable-date"
+                            value={task.startDate}
+                            onChange={(e) => updateTask(idx, { startDate: e.target.value })}
+                          />
+                        </div>
                         <div className="timeline-card">
                           <div className="card-header-row">
-                            <strong>{task.title}</strong>
+                            <input
+                              className="editable-task-title"
+                              value={task.title}
+                              onChange={(e) => updateTask(idx, { title: e.target.value })}
+                              placeholder="任务标题"
+                            />
                             <button 
                               className="btn-icon-danger" 
                               onClick={() => deleteTask(idx)}
@@ -359,7 +404,13 @@ const AIPlanView: FC<AIPlanViewProps> = ({
                               <Trash2 size={14} />
                             </button>
                           </div>
-                          <p>{task.description}</p>
+                          <textarea
+                            className="editable-task-desc"
+                            value={task.description}
+                            onChange={(e) => updateTask(idx, { description: e.target.value })}
+                            placeholder="任务描述"
+                            rows={2}
+                          />
                         </div>
                       </div>
                     </div>
@@ -933,6 +984,56 @@ const AIPlanView: FC<AIPlanViewProps> = ({
         .btn-icon-ghost:hover {
           background: rgba(0,0,0,0.05);
           color: var(--text-primary);
+        }
+
+        .editable-date {
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--text-secondary);
+          font-family: inherit;
+          font-size: 0.9rem;
+          padding: 2px 4px;
+          border-radius: 4px;
+          width: 110px;
+          cursor: pointer;
+        }
+        .editable-date:hover, .editable-date:focus {
+          border-color: var(--border-color);
+          background: var(--bg-primary);
+        }
+
+        .editable-task-title {
+          flex: 1;
+          font-weight: 600;
+          font-size: 1rem;
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--text-primary);
+          padding: 4px;
+          border-radius: 4px;
+          margin-right: 8px;
+        }
+        .editable-task-title:hover, .editable-task-title:focus {
+          border-color: var(--border-color);
+          background: var(--bg-primary);
+        }
+
+        .editable-task-desc {
+          width: 100%;
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--text-secondary);
+          font-size: 0.95rem;
+          padding: 4px;
+          border-radius: 4px;
+          resize: vertical;
+          min-height: 60px;
+          font-family: inherit;
+          margin-top: 4px;
+        }
+        .editable-task-desc:hover, .editable-task-desc:focus {
+          border-color: var(--border-color);
+          background: var(--bg-primary);
         }
       `}</style>
     </div>

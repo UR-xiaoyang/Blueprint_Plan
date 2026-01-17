@@ -29,8 +29,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ title = '计划委员会' })
     <div className="titlebar">
       <div className="titlebar-drag-region left">
         <div className="titlebar-icon">
-          {/* 这里可以放置应用图标，如果需要的话 */}
-          <span style={{ fontSize: '14px' }}>📋</span>
+          <img src="/LOGO.png" alt="icon" style={{ height: '18px', width: 'auto' }} />
         </div>
         <div className="titlebar-app-name">计划委员会</div>
       </div>

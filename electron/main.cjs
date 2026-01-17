@@ -85,10 +85,15 @@ function createTray() {
 }
 
 function createWindow() {
+  const iconPath = app.isPackaged 
+    ? path.join(__dirname, '../dist/LOGO.png') 
+    : path.join(__dirname, '../public/LOGO.png');
+
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     title: '计划委员会',
+    icon: iconPath,
     frame: false, // 移除系统标题栏
     backgroundColor: '#000000', // 防止加载时出现白屏
     webPreferences: {
