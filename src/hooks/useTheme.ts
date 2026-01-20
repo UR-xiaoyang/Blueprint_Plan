@@ -1,13 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { registerPlugin } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
-
-// 定义 NavigationBar 插件接口
-interface NavigationBarPlugin {
-  setColor(options: { color: string; darkButtons?: boolean }): Promise<void>;
-}
-
-const NavigationBar = registerPlugin<NavigationBarPlugin>('NavigationBar');
+import { Capacitor } from '@capacitor/core';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -17,27 +10,6 @@ interface ThemeSchedule {
 }
 
 const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
-// 更新 Android 状态栏和导航栏颜色
-const updateAndroidTheme = async (isDark: boolean) => {
-  try {
-    if (isDark) {
-      await StatusBar.setStyle({ style: Style.Dark });
-      // Set to black
-      await StatusBar.setBackgroundColor({ color: '#000000' });
-      await NavigationBar.setColor({ color: '#000000', darkButtons: false });
-    } else {
-      // User requested black status bar even in light mode
-      await StatusBar.setStyle({ style: Style.Dark });
-      // Set to black
-      await StatusBar.setBackgroundColor({ color: '#000000' });
-      await NavigationBar.setColor({ color: '#FFFFFF', darkButtons: true });
-    }
-  } catch (e) {
-    // 忽略在非 Android 环境下的错误，或者插件未加载的错误
-    console.warn('Failed to set Android theme:', e);
-  }
-};
 
 export const useTheme = () => {
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
@@ -97,12 +69,15 @@ export const useTheme = () => {
 
     if (isDark) {
       document.documentElement.classList.add('dark-mode');
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.setStyle({ style: Style.Dark }).catch(() => {}); // Light text (white) for dark bg
+      }
     } else {
       document.documentElement.classList.remove('dark-mode');
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.setStyle({ style: Style.Light }).catch(() => {}); // Dark text (black) for light bg
+      }
     }
-
-    // 同步到 Android 原生层
-    updateAndroidTheme(isDark);
 
   }, [themeMode, schedule]);
 

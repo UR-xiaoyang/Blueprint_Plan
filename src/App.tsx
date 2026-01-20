@@ -20,8 +20,6 @@ import ExtensionsView from './components/ExtensionsView';
 import { extensionService } from './services/extensionService';
 import { useTheme } from './hooks/useTheme';
 import { useDebugMode } from './hooks/useDebugMode';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { Capacitor } from '@capacitor/core';
 import { ViewType } from './types';
 
 export interface TaskLog {
@@ -69,25 +67,6 @@ const App: React.FC = memo(() => {
   } | null>(null);
   const dialogResolveRef = useRef<null | ((value: boolean) => void)>(null);
   const lastActiveElementRef = useRef<HTMLElement | null>(null);
-
-  // Set StatusBar style for mobile
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      const applyStatusBarStyle = async () => {
-        try {
-          // Disable overlay to allow solid color
-          await StatusBar.setOverlaysWebView({ overlay: false });
-          // Set to black background with light text
-          await StatusBar.setStyle({ style: Style.Dark });
-          await StatusBar.setBackgroundColor({ color: '#000000' });
-        } catch (e) {
-          console.error('Failed to set status bar style', e);
-        }
-      };
-
-      applyStatusBarStyle();
-    }
-  }, []); // Run once on mount
 
   // Toggle debug class on body
   useEffect(() => {

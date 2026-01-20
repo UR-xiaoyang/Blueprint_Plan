@@ -23,7 +23,7 @@ const config: CapacitorConfig = {
       spinnerColor: "#ffffff"
     },
     StatusBar: {
-      style: "DARK",
+      style: "LIGHT", // Default to Dark style (Black text) for Light theme
       backgroundColor: "#00000000", // Transparent
       overlaysWebView: true
     }

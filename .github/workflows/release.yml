@@ -57,6 +57,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Update package.json version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "Updating version to $VERSION"
+          npm version $VERSION --no-git-tag-version
+
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |

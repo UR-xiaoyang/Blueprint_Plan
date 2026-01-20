@@ -15,17 +15,17 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ currentView, onViewChange
     return () => onViewChange(view);
   }, [onViewChange]);
 
-  // Force inline styles for debug/fix on Android
-  const sidebarStyle: React.CSSProperties = {
-    backgroundColor: 'var(--sidebar-background)',
-    // Ensure it's not transparent
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    // paddingTop removed to allow CSS media queries to handle it
-  };
+  // Force inline styles removed - let CSS handle it
+  // const sidebarStyle: React.CSSProperties = {
+  //   backgroundColor: 'var(--sidebar-background)',
+  //   // Ensure it's not transparent
+  //   backdropFilter: 'blur(20px)',
+  //   WebkitBackdropFilter: 'blur(20px)',
+  //   // paddingTop removed to allow CSS media queries to handle it
+  // };
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} style={sidebarStyle}>
+    <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <nav className="sidebar-nav">
         <button
           className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`}

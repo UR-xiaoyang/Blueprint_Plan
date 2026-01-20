@@ -176,7 +176,7 @@
     width: 100%;
     height: calc(70px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
-    background: rgba(30, 41, 59, 0.95);
+    background: var(--surface-color) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border-color);
@@ -616,18 +616,20 @@
   }
 }
 
-/* 暗色模式偏好 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #0a0a0a;
-    --bg-secondary: #1a1a1a;
-    --bg-tertiary: #2a2a2a;
-    --text-primary: #ffffff;
-    --text-secondary: #b0b0b0;
-    --text-muted: #808080;
-    --border-color: #333333;
+/* 隐藏移动端滚动条 */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
+
+/* 暗色模式偏好 - 已移除，由 JS 控制 */
+/* @media (prefers-color-scheme: dark) { ... } */
+
 
 /* 横屏模式 */
 @media (orientation: landscape) and (max-height: 600px) {
