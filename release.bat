@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-setlocal
+setlocal EnableDelayedExpansion
 
 echo ==========================================
 echo      Blueprint Plan GitHub Release Script
@@ -9,17 +9,19 @@ echo.
 
 :input_msg
 set /p msg="Please enter commit message: "
-if "%msg%"=="" (
+if "!msg!"=="" (
     echo Commit message cannot be empty.
     goto input_msg
 )
+:: Replace double quotes with single quotes to avoid syntax errors
+set "msg=!msg:"='!"
 
 echo.
 set /p tag="Please enter tag (e.g. v0.4.1) [Press Enter to skip]: "
 
 set retag=n
-if not "%tag%"=="" (
-    set /p retag="Overwrite existing tag %tag%? (y/n) [default n]: "
+if not "!tag!"=="" (
+    set /p retag="Overwrite existing tag !tag!? (y/n) [default n]: "
 )
 
 echo.
@@ -28,25 +30,25 @@ git add .
 
 echo.
 echo [2/4] Committing changes (git commit)...
-git commit -m "%msg%"
+git commit -m "!msg!"
 
 echo.
 echo [3/4] Pushing to remote (git push)...
 git push
 
-if "%tag%"=="" goto end
+if "!tag!"=="" goto end
 
 echo.
-echo [4/4] Processing tag %tag%...
+echo [4/4] Processing tag !tag!...
 
-if /i "%retag%"=="y" (
+if /i "!retag!"=="y" (
     echo Deleting old tag local and remote...
-    git tag -d %tag% 2>nul
-    git push origin :refs/tags/%tag% 2>nul
+    git tag -d !tag! 2>nul
+    git push origin :refs/tags/!tag! 2>nul
 )
 
-git tag %tag%
-git push origin %tag%
+git tag !tag!
+git push origin !tag!
 
 :end
 echo.
