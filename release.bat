@@ -22,6 +22,14 @@ set /p tag="Please enter tag (e.g. v0.4.1) [Press Enter to skip]: "
 set retag=n
 if not "!tag!"=="" (
     set /p retag="Overwrite existing tag !tag!? (y/n) [default n]: "
+
+    :: Remove 'v' or 'V' prefix if present for package.json version
+    set "clean_tag=!tag!"
+    if /i "!clean_tag:~0,1!"=="v" set "clean_tag=!clean_tag:~1!"
+    
+    echo.
+    echo Updating package.json version to !clean_tag!...
+    call npm version !clean_tag! --no-git-tag-version --allow-same-version
 )
 
 echo.

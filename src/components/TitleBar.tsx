@@ -29,7 +29,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({ title = '计划委员会' })
     <div className="titlebar">
       <div className="titlebar-drag-region left">
         <div className="titlebar-icon">
-          <img src="/LOGO.png" alt="icon" style={{ height: '18px', width: 'auto' }} />
+          <img src="LOGO.png" alt="icon" style={{ height: '18px', width: 'auto' }} />
         </div>
         <div className="titlebar-app-name">计划委员会</div>
       </div>
