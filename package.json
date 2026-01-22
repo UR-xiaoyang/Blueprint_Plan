@@ -1,7 +1,7 @@
 {
   "name": "blueprint-plan",
   "private": true,
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "An application for managing blueprints and plans",
   "license": "GPL-3.0-or-later",
   "author": "URxiaoyang",
@@ -106,7 +106,8 @@
         "tar.gz",
         "AppImage"
       ],
-      "maintainer": "URxiaoyang <xiaoyang@ur-xiaoyang.com>"
+      "maintainer": "URxiaoyang <xiaoyang@ur-xiaoyang.com>",
+      "icon": "assets/logo.png"
     }
   }
 }
